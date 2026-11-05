@@ -4,6 +4,7 @@ export const TRIP_DESTINATIONS={
  kamakura:{id:'kamakura',name:'鎌倉',subtitle:'海辺と参道の散歩',kind:'coast',fare:1000,minutes:60,accent:'#799d9e',description:'海岸の遊歩道、参道、海辺のカフェを歩いて巡る街。',hotels:[lodging('kamakura_guest','鎌倉 なぎさゲストハウス','basic',4800,false,'townhouse','海辺のベッドツイン','sea'),lodging('kamakura_terrace','鎌倉 シーサイドテラス','standard',9800,true,'lodge','海を眺めるツイン','sea')]},
  hakone:{id:"hakone",name:"箱根",subtitle:"湖畔と温泉の休日",kind:"lake",fare:2200,minutes:110,accent:"#7e9b8d",description:"湖を囲む山々、鳥居とギャラリーを眺めながら歩く温泉の街。",hotels:[lodging("hakone_lake","箱根 湖畔のこもれび","standard",12800,true,"lodge","湖を望むツイン","lake"),lodging("hakone_suite","箱根 みずき温泉邸","deluxe",19800,true,"ryokan","湖畔の温泉スイート","lake")]},
  nikko:{id:"nikko",name:"日光",subtitle:"杉並木と森の散策",kind:"forest",fare:2800,minutes:130,accent:"#728c70",description:"杉並木の参道、森のお堂と滝を歩いて巡る静かな旅。",hotels:[lodging("nikko_lodge","日光 すぎの木ロッジ","standard",9800,true,"lodge","森のツインルーム","forest"),lodging("nikko_retreat","日光 森灯りの宿","deluxe",17800,true,"ryokan","木立の和洋スイート","forest")]},
+ nara:{id:"nara",name:"奈良",subtitle:"鹿の公園と古都さんぽ",kind:"heritage",fare:13000,minutes:180,accent:"#9b9978",description:"鹿が過ごす公園、お堂と古都の道をゆったり歩く街。",hotels:[lodging("nara_guest","奈良 こみち町家ステイ","basic",5800,false,"townhouse","町家のベッドツイン","forest"),lodging("nara_garden","奈良 若葉ガーデンホテル","standard",11200,true,"lodge","庭を眺めるツイン","forest")]},
  // NEXT_DESTINATION
 };
 export const EXTRA_HOTELS=Object.fromEntries(Object.values(TRIP_DESTINATIONS).flatMap(d=>d.hotels.map(h=>[h.id,{...h,destination:d.id}])));
