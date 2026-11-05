@@ -114,8 +114,8 @@ export function createTravelWorld(root,region,hotel=HOTELS.kadensho) {
   for(let x=-7.8;x<8;x+=1.3){box(x,1.5,9.4,.045,2.9,.06,'#9d8964');box(x,1.4,-5,.09,2.8,.1,'#846e50');}
   for(const y of [.7,1.5,2.3])box(0,y,9.38,16,.045,.06,'#a18a61');
   // Futon, zabuton, tea service, tokonoma, shoji and a garden-facing veranda.
-  const bedRaise=hotel.style==='townhouse'?.3:0;for(const x of [-4.5,-1.3]){if(bedRaise)box(x,.7,.2,2.2,1.1,.15,'#9b8464');box(x,.14+bedRaise,2,2.2,.25,3.6,'#f1ead5',true,true);box(x,.32+bedRaise,2.35,2.15,.15,2.6,hotel.linen,false,true);box(x,.32+bedRaise,.7,1.1,.2,.55,'#ede8d8',false,true);}
-  interact('hotel-sleep','布団 · 翌朝まで眠る',-3,.6,3.5,2.6);
+  const bedRaise=hotel.destination?(hotel.tier==='deluxe'?.45:.35):hotel.style==='townhouse'?.3:0;for(const x of [-4.5,-1.3]){if(bedRaise)box(x,.7,.2,2.2,1.1,.15,'#9b8464');box(x,.14+bedRaise,2,2.2,.25,3.6,'#f1ead5',true,true);box(x,.32+bedRaise,2.35,2.15,.15,2.6,hotel.linen,false,true);box(x,.32+bedRaise,.7,1.1,.2,.55,'#ede8d8',false,true);}
+  interact('hotel-sleep',(bedRaise?'ベッド':'布団')+' · 翌朝まで眠る',-3,.6,3.5,2.6);
   box(3,.4,2,2.5,.12,1.5,'#9b7b51',true,true);for(const x of [1.5,4.5])box(x,.13,2,.8,.2,.8,'#788369',false,true);
   cylinder(3,.51,2,.23,.08,'#d5c8a2');for(const x of [2.5,3.5])cylinder(x,.57,2,.1,.2,'#d4dbb9');interact('hotel-tea','お茶 · 庭を眺めてひと休み',3,.8,2,2.4);
   box(-6.5,.3,-3,2,.6,1.5,'#8c7858');sign('花鳥風月',-6.5,1.8,-3.65,1.8,0,'#e4dec8','#657155');
@@ -125,6 +125,7 @@ export function createTravelWorld(root,region,hotel=HOTELS.kadensho) {
   box(10.05,.5,-3,.15,.7,5.2,'#b5a076');for(const z of [-4.85,-1.15])box(5.95,.5,z,.15,.7,1.5,'#b5a076');box(5.75,.12,-3,.8,.24,1.3,'#b5a076');box(6.35,.3,-3,.6,.25,1.3,'#b5a076');for(const z of [-5.55,-.45])box(8,.5,z,4.2,.7,.15,'#b5a076');
   interact('hotel-bath','露天風呂 · 湯けむりに包まれる',5.55,1.3,-3,2.8);
   const steam=new THREE.Group();root.add(steam);for(let i=0;i<7;i++){const o=new THREE.Mesh(new THREE.SphereGeometry(.5,10,8),mat('#edf1e6',{transparent:true,opacity:.08,depthWrite:false}));o.position.set(7+(i%3)*.7,.8+i*.2,-4+(i%4)*.6);o.scale.set(1,.65,1);steam.add(o);}dynamic.push({object:steam,kind:'steam'});
+  if(hotel.destination&&hotel.tier==='deluxe'){box(5,.45,5.5,3,.45,1.1,'#8caa9f',true);box(5,.95,5.95,3,.9,.2,'#7f9b91');for(const x of [3.55,6.45])box(x,.75,5.5,.16,.65,1.1,'#7f9b91');for(const x of [4.3,5.7])box(x,.75,5.8,.55,.5,.12,'#d8cfb8');}
   if(hotel.view){if(['sea','lake','port'].includes(hotel.view)){box(0,.06,-18,50,.08,20,'#779eaa');for(let i=0;i<10;i++)box(-20+i*4,.11,-12-i%3*3,2,.015,.035,'#c9ddd6');}if(['city','port'].includes(hotel.view))for(let i=0;i<8;i++)box(-21+i*6,2+i%3,-25,4,6+i%3*3,4,'#a7bdb6');box(-6,2.7,-3.6,3,.08,.35,'#b49a72');for(let i=0;i<8;i++)box(-7.2+i*.32,2.9,-3.6,.2,.4,.28,['#80978a','#ac9b7c','#8d919c'][i%3]);}
   for(const x of [-13,-8,2,14])tree(x,-14,1.2);for(let i=0;i<8;i++)mountain(-50+i*15,-35,15,9+i%3*3,'#7f9478');
   sign('ロビーへ',0,2.1,9.35,2.3,Math.PI);interact('hotel-lobby','客室の入口 · ロビーへ戻る',0,1.4,8,2.5);light(0,2.6,3);light(4,2.4,-2);
