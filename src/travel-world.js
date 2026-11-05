@@ -93,7 +93,7 @@ export function createTravelWorld(root,region,hotel=HOTELS.kadensho) {
   box(0,-.04,0,18,.14,20,'#af946f');for(let x=-9;x<9;x+=.5)box(x,.04,0,.015,.01,20,'#907c5c');
   box(0,3.55,0,18,.12,20,'#dcd5bf');for(let x=-9;x<=9;x+=3)box(x,3.35,0,.16,.18,20,'#776046');
   box(0,1.7,-9.5,18,3.4,.15,'#d7cfb4',true);for(const x of [-9,9]){box(x,.45,0,.12,.9,20,'#9c8665',true);for(let z=-9;z<=9;z+=3)box(x,1.8,z,.16,3.5,.16,'#66533e',true);}
-  box(0,.62,-3.7,5,1.24,1.3,'#86704f',true,true);box(0,1.28,-3.7,5.3,.09,1.5,'#c4af86');sign('花伝抄  /  RECEPTION',0,2.25,-9.38,5);interact('hotel-reception','フロント · 宿泊の手続き',0,1.5,-2.9,2.8);
+  box(0,.62,-3.7,5,1.24,1.3,'#86704f',true,true);box(0,1.28,-3.7,5.3,.09,1.5,'#c4af86');sign(hotel.name+' / RECEPTION',0,2.25,-9.38,5);interact('hotel-reception','フロント · 宿泊の手続き',0,1.5,-2.9,2.8);
   for(const x of [-5.5,5.5]){bench(x,2,3);box(x,.4,4,2,.12,1,'#b59a70',true);cylinder(x,.55,4,.18,.18,'#e2ddc3');}
   sign('客室・露天風呂  →',5.5,2.2,-4,3.5);interact('hotel-room','客室と露天風呂へ',5.5,1.5,-4,2.7);
   sign('お食事処',-5.5,2.2,-4,2.4);interact('hotel-dinner','食事処 · 宿泊のお食事',-5.5,1.4,-4,2.7);
@@ -102,6 +102,7 @@ export function createTravelWorld(root,region,hotel=HOTELS.kadensho) {
   for(const x of [-15,15]){tree(x,-5,1.3);tree(x,7,1);box(x,.04,1,5,.08,8,'#aeb791');orb(x,.5,1,1,'#8c9483',1,.5,.8);}
  }
  else if(region==='room') {
+  sign(hotel.roomName,0,2.65,9.32,4.5,Math.PI);
   ground(80,80,'#92a47e');bounds={minX:-7.5,maxX:10,minZ:-8,maxZ:9};
   box(0,-.08,0,16,.2,19,'#aa9571');box(0,3.05,2,16,.15,15,'#d8cfb6');
   for(let x=-6;x<=4;x+=2)for(let z=-3;z<=7;z+=3){box(x,.045,z,1.97,.045,2.97,hotel.floor);box(x-.97,.072,z,.035,.012,2.98,'#6b7959');}

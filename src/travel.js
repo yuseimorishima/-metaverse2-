@@ -3,10 +3,11 @@ import {DISTRICTS} from './town.js';
 // Fares, hotel services and durations are game settings.
 export const HOTEL_NAME='京都 嵐山温泉 花伝抄';
 export const TRAVEL={railFare:14000,railMinutes:140,localFare:240,localMinutes:25,roomFare:22000};
+export const HOTEL_TIERS={basic:{rank:1,name:'ベーシック'},standard:{rank:2,name:'スタンダード'},deluxe:{rank:3,name:'デラックス'}};
 export const HOTELS={
- kadensho:{id:'kadensho',name:HOTEL_NAME,price:22000,meals:true,style:'ryokan',tag:'温泉旅館',description:'畳の客室と露天風呂。夕食・朝食付き。館内は仮内装です。',floor:'#c3bc8d',linen:'#d5d3ba',wall:'#d4ccb0'},
- komorebi:{id:'komorebi',name:'嵐山 こもれび庵',price:12000,meals:true,style:'lodge',tag:'森の小宿',description:'木のぬくもりと緑の寝具。夕食・朝食付きの、ゲームオリジナルの宿。',floor:'#bc9d73',linen:'#a4b6a0',wall:'#dce0ce'},
- machiya:{id:'machiya',name:'嵐山 まちやステイ',price:6800,meals:false,style:'townhouse',tag:'素泊まり',description:'気軽な一泊に。食事は夕食 ¥1,800・朝食 ¥850で追加できる、ゲームオリジナルの宿。',floor:'#bbac95',linen:'#a7bdc2',wall:'#e4dfd4'},
+ kadensho:{id:'kadensho',tier:'deluxe',roomName:'デラックスツイン',referenceStatus:'pending',name:HOTEL_NAME,price:22000,meals:true,style:'ryokan',tag:'温泉旅館',description:'デラックスツインの内装再現を予定。客室写真・間取りは未照合で、現在は仮配置です。食事はゲーム設定で2食付き。',floor:'#c3bc8d',linen:'#d5d3ba',wall:'#d4ccb0'},
+ komorebi:{id:'komorebi',tier:'standard',roomName:'和のツインルーム',referenceStatus:'original',name:'嵐山 こもれび庵',price:12000,meals:true,style:'lodge',tag:'森の小宿',description:'木のぬくもりと緑の寝具。夕食・朝食付きの、ゲームオリジナルの宿。',floor:'#bc9d73',linen:'#a4b6a0',wall:'#dce0ce'},
+ machiya:{id:'machiya',tier:'basic',roomName:'ベッドツインルーム',referenceStatus:'original',name:'嵐山 まちやステイ',price:6800,meals:false,style:'townhouse',tag:'素泊まり',description:'気軽な一泊に。食事は夕食 ¥1,800・朝食 ¥850で追加できる、ゲームオリジナルの宿。',floor:'#bbac95',linen:'#a7bdc2',wall:'#e4dfd4'},
 };
 export const PLACES={...DISTRICTS,residential:{name:'こもれび住宅地',spawn:[0,1.65,49],yaw:0},home:{name:'木漏れ日の街',spawn:[0,1.65,9],yaw:0},tokyo:{name:'東京駅 · 東海道新幹線',spawn:[0,1.65,12],yaw:0},train:{name:'東海道新幹線 · 車内',spawn:[0,1.65,7.5],yaw:0},kyoto:{name:'京都駅 · 嵯峨野線のりかえ',spawn:[0,1.65,9],yaw:0},arashiyama:{name:'嵐山 · 渡月橋と竹の小径',spawn:[0,1.65,13],yaw:0},hotel:{name:HOTEL_NAME+' · ロビー',spawn:[0,1.65,7],yaw:0},room:{name:HOTEL_NAME+' · 客室と露天風呂',spawn:[0,1.65,6],yaw:0}};
 export function freshTravel(){return {version:2,region:'home',ticket:null,journey:null,stay:null,visited:[],hotelId:'kadensho',reservation:null,plan:null,returnTicket:false,localPass:0,ticketDay:0};}
