@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {newLife,validSave,loadLife} from '../src/life.js';
 import {TRIP_DESTINATIONS} from '../src/destinations.js';
-import {HOTELS,ensureTravel,visit,bookPackage,cancelExcursion,cancelHotel,rideExcursion,enterRegionHotel,leaveRegionHotel,checkIn,checkOut,enterRoom,sleepAtHotel,rememberDestination} from '../src/travel.js';
+import {HOTELS,ensureTravel,visit,bookPackage,cancelExcursion,cancelHotel,rideExcursion,enterRegionHotel,leaveRegionHotel,checkIn,checkOut,enterRoom,sleepAtHotel,rememberDestination,reserveHotel} from '../src/travel.js';
 import {beginRoutine,routineAvailability} from '../src/routines.js';
 const resident=()=>{const s=newLife();s.money=100000;ensureTravel(s);return s;};
 for(const d of Object.values(TRIP_DESTINATIONS)){
@@ -26,3 +26,5 @@ for(const d of Object.values(TRIP_DESTINATIONS)){
  });
 }
 test('old version-2 saves load without new trip fields and malformed route data is rejected',()=>{const s=resident();delete s.travel.excursion;delete s.travel.memories;delete s.travel.hotelReturn;assert.ok(validSave(s));ensureTravel(s);assert.deepEqual(s.travel.memories,[]);s.travel.excursion={destination:'missing',day:1,outbound:true,return:true};assert.equal(validSave(s),false);});
+
+test('changing hotels requires leaving the actual lobby first',()=>{for(const d of Object.values(TRIP_DESTINATIONS)){const s=resident(),[a,b]=d.hotels;visit(s,d.id);s.position=[-18,1.65,8];assert.equal(enterRegionHotel(s,a.id),true);assert.equal(reserveHotel(s,b.id,1),false);assert.equal(s.travel.hotelId,a.id);assert.equal(s.money,100000);assert.equal(leaveRegionHotel(s),true);s.position=[18,1.65,8];assert.equal(enterRegionHotel(s,b.id),true);assert.equal(reserveHotel(s,b.id,1),true);assert.equal(checkIn(s),true);assert.equal(s.money,100000-b.price);assert.ok(validSave(s));}});
