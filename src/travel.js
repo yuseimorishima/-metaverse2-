@@ -1,44 +1,57 @@
+import {recordDaily} from './daily.js';
 import {DISTRICTS} from './town.js';
-// These fares and durations are scenario values, not live railway/hotel information.
-export const HOTEL_NAME = '京都 嵐山温泉 花伝抄';
-export const TRAVEL = {
- railFare: 14000, railMinutes: 140, localFare: 240, localMinutes: 25, roomFare: 22000,
+// Fares, hotel services and durations are game settings.
+export const HOTEL_NAME='京都 嵐山温泉 花伝抄';
+export const TRAVEL={railFare:14000,railMinutes:140,localFare:240,localMinutes:25,roomFare:22000};
+export const HOTELS={
+ kadensho:{id:'kadensho',name:HOTEL_NAME,price:22000,meals:true,style:'ryokan',tag:'温泉旅館',description:'畳の客室と露天風呂。夕食・朝食付き。館内は仮内装です。',floor:'#c3bc8d',linen:'#d5d3ba',wall:'#d4ccb0'},
+ komorebi:{id:'komorebi',name:'嵐山 こもれび庵',price:12000,meals:true,style:'lodge',tag:'森の小宿',description:'木のぬくもりと緑の寝具。夕食・朝食付きの、ゲームオリジナルの宿。',floor:'#bc9d73',linen:'#a4b6a0',wall:'#dce0ce'},
+ machiya:{id:'machiya',name:'嵐山 まちやステイ',price:6800,meals:false,style:'townhouse',tag:'素泊まり',description:'気軽な一泊に。食事は夕食 ¥1,800・朝食 ¥850で追加できる、ゲームオリジナルの宿。',floor:'#bbac95',linen:'#a7bdc2',wall:'#e4dfd4'},
 };
-export const PLACES = {
- ...DISTRICTS,
- residential:{name:'こもれび住宅地',spawn:[0,1.65,49],yaw:0},
- home: {name:'木漏れ日の街',spawn:[0,1.65,9],yaw:0},
- tokyo: {name:'東京駅 · 東海道新幹線',spawn:[0,1.65,12],yaw:0},
- train: {name:'東海道新幹線 · 車内',spawn:[0,1.65,7.5],yaw:0},
- kyoto: {name:'京都駅 · 嵯峨野線のりかえ',spawn:[0,1.65,9],yaw:0},
- arashiyama: {name:'嵐山 · 渡月橋と竹の小径',spawn:[0,1.65,13],yaw:0},
- hotel: {name:HOTEL_NAME+' · ロビー',spawn:[0,1.65,7],yaw:0},
- room: {name:HOTEL_NAME+' · 客室と露天風呂',spawn:[0,1.65,6],yaw:0},
-};
-export function freshTravel() { return {region:'home',funds:60000,ticket:null,journey:null,stay:null,visited:[]}; }
-export function ensureTravel(s) { if(!s.travel)s.travel=freshTravel();return s.travel; }
-export function validTravel(t) {
- if(!t||!Object.hasOwn(PLACES,t.region)||!Number.isInteger(t.funds)||t.funds<0||!Array.isArray(t.visited)||!t.visited.every(p=>Object.hasOwn(PLACES,p)))return false;
+export const PLACES={...DISTRICTS,residential:{name:'こもれび住宅地',spawn:[0,1.65,49],yaw:0},home:{name:'木漏れ日の街',spawn:[0,1.65,9],yaw:0},tokyo:{name:'東京駅 · 東海道新幹線',spawn:[0,1.65,12],yaw:0},train:{name:'東海道新幹線 · 車内',spawn:[0,1.65,7.5],yaw:0},kyoto:{name:'京都駅 · 嵯峨野線のりかえ',spawn:[0,1.65,9],yaw:0},arashiyama:{name:'嵐山 · 渡月橋と竹の小径',spawn:[0,1.65,13],yaw:0},hotel:{name:HOTEL_NAME+' · ロビー',spawn:[0,1.65,7],yaw:0},room:{name:HOTEL_NAME+' · 客室と露天風呂',spawn:[0,1.65,6],yaw:0}};
+export function freshTravel(){return {version:2,region:'home',ticket:null,journey:null,stay:null,visited:[],hotelId:'kadensho',reservation:null,plan:null,returnTicket:false,localPass:0,ticketDay:0};}
+export function ensureTravel(s){
+ if(!s.travel)s.travel=freshTravel();
+ const t=s.travel;
+ if(t.version!==2){if(Number.isInteger(t.funds)&&t.funds>=0)s.money+=t.funds;delete t.funds;t.version=2;}
+ if(t.returnTicket===undefined)t.returnTicket=false;if(t.localPass===undefined)t.localPass=0;if(t.ticketDay===undefined)t.ticketDay=0;
+ if(t.hotelId===undefined)t.hotelId='kadensho';if(t.reservation===undefined)t.reservation=null;if(t.plan===undefined)t.plan=null;
+ return t;
+}
+export function hotelFor(s){return HOTELS[s.travel?.hotelId]||HOTELS.kadensho;}
+export function validTravel(t){
+ if(!t||!Object.hasOwn(PLACES,t.region)||!Array.isArray(t.visited)||!t.visited.every(p=>Object.hasOwn(PLACES,p)))return false;
+ if(t.version===undefined){if(!Number.isInteger(t.funds)||t.funds<0)return false;}else if(t.version!==2||t.funds!==undefined||!Object.hasOwn(HOTELS,t.hotelId))return false;
+ if(t.version===2&&(typeof t.returnTicket!=='boolean'||!Number.isInteger(t.localPass)||t.localPass<0||t.localPass>2||!Number.isInteger(t.ticketDay)||t.ticketDay<0))return false;
  if(t.ticket!==null&&!['tokyo','kyoto'].includes(t.ticket))return false;
  if(t.journey!==null&&(!['tokyo','kyoto'].includes(t.journey?.destination)||!Number.isFinite(t.journey.remaining)||t.journey.remaining<0||t.journey.remaining>TRAVEL.railMinutes))return false;
  if((t.region==='train')!==(t.journey!==null))return false;
  if(t.stay!==null&&(!Number.isInteger(t.stay?.checkInDay)||t.stay.checkInDay<1||typeof t.stay.rested!=='boolean'||!Number.isInteger(t.stay.dinnerDay)||t.stay.dinnerDay<0))return false;
  if(t.region==='room'&&!t.stay)return false;
+ if(t.reservation!=null&&(!Object.hasOwn(HOTELS,t.reservation.hotelId)||!Number.isInteger(t.reservation.day)||t.reservation.day<1||t.reservation.price!==HOTELS[t.reservation.hotelId].price||t.stay||t.reservation.hotelId!==t.hotelId))return false;
+ if(t.plan!=null&&(!['daytrip','overnight','tokyo'].includes(t.plan.kind)||!Number.isInteger(t.plan.day)||t.plan.day<1||!Object.hasOwn(HOTELS,t.plan.hotelId)))return false;
  return true;
 }
-function advance(s,minutes) {s.minutes+=minutes;while(s.minutes>=1440){s.minutes-=1440;s.day++;}s.hunger=Math.max(0,s.hunger-minutes*.175);s.thirst=Math.max(0,s.thirst-minutes*.25);}
-export function visit(s,region) {const t=ensureTravel(s);t.region=region;if(!t.visited.includes(region))t.visited.push(region);s.position=[...PLACES[region].spawn];s.yaw=PLACES[region].yaw;s.pitch=0;}
-export function buyRailTicket(s) {const t=ensureTravel(s);if(!['tokyo','kyoto'].includes(t.region)||t.ticket||t.funds<TRAVEL.railFare)return false;t.ticket=t.region==='tokyo'?'kyoto':'tokyo';t.funds-=TRAVEL.railFare;return true;}
-export function boardTrain(s) {const t=ensureTravel(s);const target=t.region==='tokyo'?'kyoto':t.region==='kyoto'?'tokyo':null;if(!target||t.ticket!==target)return false;t.ticket=null;t.journey={destination:target,remaining:TRAVEL.railMinutes};visit(s,'train');return true;}
-export function progressJourney(s,minutes) {const t=ensureTravel(s);if(t.region!=='train'||!Number.isFinite(minutes)||minutes<0)return false;t.journey.remaining=Math.max(0,t.journey.remaining-minutes);return t.journey.remaining===0;}
-export function rideToArrival(s) {const t=ensureTravel(s);if(t.region!=='train')return false;advance(s,t.journey.remaining);s.energy=Math.min(100,s.energy+15);t.journey.remaining=0;return true;}
-export function leaveTrain(s) {const t=ensureTravel(s);if(t.region!=='train'||t.journey.remaining>0)return false;const destination=t.journey.destination;t.journey=null;visit(s,destination);return true;}
-export function localTrain(s) {const t=ensureTravel(s);if(!['kyoto','arashiyama'].includes(t.region)||t.funds<TRAVEL.localFare)return false;t.funds-=TRAVEL.localFare;advance(s,TRAVEL.localMinutes);visit(s,t.region==='kyoto'?'arashiyama':'kyoto');return true;}
-export function checkIn(s) {const t=ensureTravel(s);if(t.region!=='hotel'||t.stay||t.funds<TRAVEL.roomFare)return false;t.funds-=TRAVEL.roomFare;t.stay={checkInDay:s.day,rested:false,dinnerDay:0};advance(s,Math.max(0,900-s.minutes));return true;}
-export function enterRoom(s) {const t=ensureTravel(s);if(t.region!=='hotel'||!t.stay)return false;visit(s,'room');return true;}
-export function hotelDinner(s) {const t=ensureTravel(s);if(!['hotel','room'].includes(t.region)||!t.stay||t.stay.dinnerDay===s.day)return false;t.stay.dinnerDay=s.day;advance(s,45);s.hunger=100;s.thirst=100;s.mood=Math.min(100,s.mood+15);return true;}
-export function bathe(s) {const t=ensureTravel(s);if(t.region!=='room'||!t.stay)return false;advance(s,30);s.energy=Math.min(100,s.energy+30);s.mood=Math.min(100,s.mood+25);return true;}
-export function sleepAtHotel(s) {const t=ensureTravel(s);if(t.region!=='room'||!t.stay||t.stay.rested)return false;t.stay.rested=true;if(!s.completed.includes('hotel-stay'))s.completed.push('hotel-stay');s.day++;s.minutes=420;s.energy=100;s.hunger=Math.max(10,s.hunger-20);s.thirst=Math.max(10,s.thirst-20);return true;}
-export function checkOut(s) {const t=ensureTravel(s);if(t.region!=='hotel'||!t.stay)return false;t.stay=null;return true;}
-
-export function addTravelFunds(s) {const t=ensureTravel(s);if(s.money<1000)return false;s.money-=1000;t.funds+=1000;return true;}
+function advance(s,minutes){s.minutes+=minutes;while(s.minutes>=1440){s.minutes-=1440;s.day++;}s.hunger=Math.max(0,s.hunger-minutes*.175);s.thirst=Math.max(0,s.thirst-minutes*.25);}
+export function visit(s,region){if(!Object.hasOwn(PLACES,region))return false;const t=ensureTravel(s);t.region=region;if(region==='arashiyama')recordDaily(s,'trip',true);if(!t.visited.includes(region))t.visited.push(region);s.position=[...PLACES[region].spawn];s.yaw=PLACES[region].yaw;s.pitch=0;return true;}
+export function railDestination(s){return ['kyoto','arashiyama','hotel','room'].includes(ensureTravel(s).region)?'tokyo':'kyoto';}
+export function reserveRailTicket(s,day=s.day){const t=ensureTravel(s);if(t.region==='train'||t.ticket||!Number.isInteger(day)||day<s.day||day>s.day+30||s.money<TRAVEL.railFare)return false;s.money-=TRAVEL.railFare;t.ticket=railDestination(s);t.ticketDay=day;return true;}
+export function buyRailTicket(s){const t=ensureTravel(s);if(!['tokyo','kyoto'].includes(t.region))return false;return reserveRailTicket(s);}
+export function cancelRailTicket(s){const t=ensureTravel(s),refund=(t.ticket?TRAVEL.railFare:0)+(t.returnTicket?TRAVEL.railFare:0)+t.localPass*TRAVEL.localFare;if(!refund)return false;t.ticket=null;t.returnTicket=false;t.localPass=0;t.ticketDay=0;s.money+=refund;return true;}
+export function tripEstimate(kind,hotelId='kadensho'){return kind==='tokyo'?0:TRAVEL.railFare*2+TRAVEL.localFare*2+(kind==='overnight'?HOTELS[hotelId].price:0);}
+export function bookPackage(s,kind,hotelId,day){const t=ensureTravel(s),h=HOTELS[hotelId];if(!['daytrip','overnight'].includes(kind)||!h||!['home','residential','cafe','library','garden','hill','waterfront','tokyo'].includes(t.region)||t.ticket||t.returnTicket||t.localPass||t.stay||t.reservation||!Number.isInteger(day)||day<s.day||day>s.day+30||s.money<tripEstimate(kind,hotelId))return false;s.money-=tripEstimate(kind,hotelId);t.ticket='kyoto';t.ticketDay=day;t.returnTicket=true;t.localPass=2;t.hotelId=hotelId;if(kind==='overnight')t.reservation={hotelId,day,price:h.price};t.plan={kind,day,hotelId};return true;}
+export function saveTripPlan(s,kind,day,hotelId='kadensho'){if(!['daytrip','overnight','tokyo'].includes(kind)||!Number.isInteger(day)||day<s.day||day>s.day+30||!Object.hasOwn(HOTELS,hotelId))return false;ensureTravel(s).plan={kind,day,hotelId};return true;}
+export function reserveHotel(s,hotelId,day){const t=ensureTravel(s),h=HOTELS[hotelId];if(!h||t.stay||t.reservation||!Number.isInteger(day)||day<s.day||day>s.day+30||s.money<h.price)return false;s.money-=h.price;t.hotelId=hotelId;t.reservation={hotelId,day,price:h.price};return true;}
+export function cancelHotel(s){const t=ensureTravel(s);if(!t.reservation)return false;s.money+=t.reservation.price;t.reservation=null;return true;}
+export function canCheckIn(s){const t=ensureTravel(s);return t.region==='hotel'&&!t.stay&&(t.reservation?t.reservation.day===s.day:s.money>=hotelFor(s).price);}
+export function boardTrain(s){const t=ensureTravel(s),target=t.region==='tokyo'?'kyoto':t.region==='kyoto'?'tokyo':null;if(!target||t.ticket!==target||t.ticketDay>s.day)return false;t.ticket=null;t.ticketDay=0;t.journey={destination:target,remaining:TRAVEL.railMinutes};visit(s,'train');return true;}
+export function progressJourney(s,minutes){const t=ensureTravel(s);if(t.region!=='train'||!Number.isFinite(minutes)||minutes<0)return false;t.journey.remaining=Math.max(0,t.journey.remaining-minutes);return t.journey.remaining===0;}
+export function rideToArrival(s){const t=ensureTravel(s);if(t.region!=='train')return false;advance(s,t.journey.remaining);s.energy=Math.min(100,s.energy+15);t.journey.remaining=0;return true;}
+export function leaveTrain(s){const t=ensureTravel(s);if(t.region!=='train'||t.journey.remaining>0)return false;const destination=t.journey.destination;t.journey=null;visit(s,destination);if(destination==='kyoto'&&t.returnTicket){t.ticket='tokyo';t.ticketDay=0;t.returnTicket=false;}return true;}
+export function localTrain(s){const t=ensureTravel(s);if(!['kyoto','arashiyama'].includes(t.region)||(!t.localPass&&s.money<TRAVEL.localFare))return false;if(t.localPass)t.localPass--;else s.money-=TRAVEL.localFare;advance(s,TRAVEL.localMinutes);visit(s,t.region==='kyoto'?'arashiyama':'kyoto');return true;}
+export function checkIn(s){if(!canCheckIn(s))return false;const t=ensureTravel(s);if(t.reservation)t.reservation=null;else s.money-=hotelFor(s).price;t.stay={checkInDay:s.day,rested:false,dinnerDay:0};advance(s,Math.max(0,900-s.minutes));return true;}
+export function enterRoom(s){const t=ensureTravel(s);if(t.region!=='hotel'||!t.stay)return false;visit(s,'room');return true;}
+export function hotelDinner(s){const t=ensureTravel(s);if(!['hotel','room'].includes(t.region)||!t.stay||t.stay.dinnerDay===s.day)return false;const fee=hotelFor(s).meals?0:1800;if(s.money<fee)return false;s.money-=fee;t.stay.dinnerDay=s.day;advance(s,45);s.hunger=100;s.thirst=100;s.mood=Math.min(100,s.mood+15);return true;}
+export function bathe(s){const t=ensureTravel(s);if(t.region!=='room'||!t.stay)return false;advance(s,30);s.energy=Math.min(100,s.energy+30);s.mood=Math.min(100,s.mood+25);return true;}
+export function sleepAtHotel(s){const t=ensureTravel(s);if(t.region!=='room'||!t.stay||t.stay.rested)return false;t.stay.rested=true;if(!s.completed.includes('hotel-stay'))s.completed.push('hotel-stay');s.day++;s.minutes=420;s.energy=100;s.hunger=Math.max(10,s.hunger-20);s.thirst=Math.max(10,s.thirst-20);return true;}
+export function checkOut(s){const t=ensureTravel(s);if(t.region!=='hotel'||!t.stay)return false;t.stay=null;return true;}

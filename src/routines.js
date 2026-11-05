@@ -1,3 +1,5 @@
+import {habitAvailability,recordDaily} from './daily.js';
+import {hotelFor} from './travel.js';
 import {LAYOUT,isLocalRegion} from './geography.js';
 import {LOTS} from './housing.js';
 import {ensureTown} from './town.js';
@@ -9,6 +11,9 @@ export const PACES={
  real:{name:'長い時間を楽しむ',meal:900,snack:300,drink:180,wash:120,rinse:60,soak:480,dry:60,cook:180},
 };
 export const DISHES={
+ clean:{name:'家を、きれいに。',kind:'habit',portions:3,mood:8},
+ stretch:{name:'体をほぐす、ひととき。',kind:'habit',portions:3,mood:5,energy:5},
+ study:{name:'本から学ぶ、静かな時間。',kind:'habit',portions:3,mood:6},
  bread:{name:'焼きたてパン',kind:'snack',portions:4,hunger:35,thirst:0,mood:5,item:'bread'},
  apple:{name:'りんご',kind:'snack',portions:4,hunger:20,thirst:12,mood:5,item:'apple'},
  homemade:{name:'採れたて野菜のプレート',kind:'meal',portions:6,hunger:65,thirst:15,mood:12},
@@ -41,11 +46,12 @@ export const nearbyHomeFixture=(s,type)=>homeFixturePoint(s,type)!==null;
 export function mealPeriod(minutes){return minutes>=360&&minutes<600?'朝ごはんの時間':minutes>=660&&minutes<900?'お昼ごはんの時間':minutes>=1080&&minutes<1320?'夕ごはんの時間':'おやつ・くつろぎの時間';}
 export function serviceHours(id){return {cafe:'11:00〜20:30',cafeBreakfast:'7:00〜11:00',cafeCoffee:'7:00〜21:00',dinner:'18:00〜21:00',breakfast:'7:00〜10:00',publicBath:'6:00〜23:00',hotelBath:'5:00〜24:00'}[id]||'いつでも';}
 function during(s,start,end){return s.minutes>=start&&s.minutes<end;}
+export function routinePrice(s,id){if(['dinner','breakfast'].includes(id)&&!hotelFor(s).meals)return id==='dinner'?1800:850;return DISHES[id]?.price||0;}
 export function routineAvailability(s,id){
  const item=DISHES[id];if(!item)return {ok:false,reason:'この体験はありません。'};
  if(ensureRoutines(s).active)return {ok:false,reason:'途中の食事・入浴を再開するか、片づけてください。'};
  const t=s.travel,town=ensureTown(s),money=s.money;
- let reason='';
+ let reason='';if(item.kind==='habit'){const a=habitAvailability(s,id);if(!a.ok)reason=a.reason;}
  if(item.item&&!s.inventory[item.item])reason='持ちものがありません。';
  if(id==='homemade'&&!town.meals)reason='先にキッチンで料理を作りましょう。';
  if(['cafe','cafeBreakfast','cafeCoffee'].includes(id)){
@@ -58,7 +64,7 @@ export function routineAvailability(s,id){
   else if(id==='dinner'&&t.stay.dinnerDay===s.day||id==='breakfast'&&ensureRoutines(s).breakfastDay===s.day)reason='今日のお食事は提供済みです。';
   else if(id==='breakfast'&&!t.stay.rested)reason='朝ごはんは宿泊の翌朝にご用意します。';
  }
- if(id==='bento'&&(t?.region!=='train'||t.funds<1200))reason='新幹線の車内で、旅の積立金から購入します。';
+ if(id==='bento'&&t?.region!=='train')reason='駅弁は新幹線の車内で購入します。';
  if(id==='coffee'&&(!s.inventory.coffee||!(isLocalRegion(t?.region)&&((distance(s,-3.2,-5.2)<4)||nearbyHomeFixture(s,'kitchen')))))reason='豆を用意して、自宅のキッチンで淹れましょう。';
  if(id==='tea'&&(!['hotel','room'].includes(t?.region)||!t.stay))reason='宿泊の手続きをしたお部屋でどうぞ。';
  if(id==='cook'&&(!['home','residential'].includes(t?.region)||(!nearbyHomeFixture(s,'kitchen')&&distance(s,-2.15,-5.15)>4)||town.tomatoes<1||(!town.fish&&!s.inventory.bread)))reason='自宅のキッチンと、トマト1個・魚またはパン1個が必要です。';
@@ -71,7 +77,7 @@ export function routineAvailability(s,id){
   if(t?.region!=='room'||!t.stay)reason='宿泊の手続きをして、客室の露天風呂へどうぞ。';
   else if(!during(s,300,1440))reason=`入浴できる時間は ${serviceHours(id)} です。`;
  }
- if(id!=='bento'&&item.price&&money<item.price)reason='所持金が足りません。';
+ if(money<routinePrice(s,id))reason='所持金が足りません。';
  return {ok:!reason,reason:reason||`${serviceHours(id)} · ごゆっくりどうぞ。`};
 }
 export function beginRoutine(s,id){
@@ -81,11 +87,11 @@ export function beginRoutine(s,id){
  if(id==='homemade')town.meals--;
  if(id==='coffee')s.inventory.coffee--;
  if(id==='cook'){town.tomatoes--;if(town.fish)town.fish--;else s.inventory.bread--;}
- if(dish.price){if(id==='bento')s.travel.funds-=dish.price;else s.money-=dish.price;}
+ const fee=routinePrice(s,id);if(fee)s.money-=fee;
  if(id==='dinner')s.travel.stay.dinnerDay=s.day;
  if(id==='breakfast')r.breakfastDay=s.day;
  const d=ensureDeluxe(s);d.riding=false;const fixture=id==='shower'?homeFixturePoint(s,'shower'):null;
- r.active={id,kind:dish.kind,phase:dish.kind==='bath'?'wash-walk':'ready',paused:false,done:0,remaining:0,elapsed:0,portionSeconds:(p[dish.kind]||p.meal)/(dish.portions||1),washSeconds:p.wash/3,rinseSeconds:p.rinse,soakSeconds:p.soak,drySeconds:p.dry,anchor:fixture?[fixture[0],1.65,fixture[1]]:[...s.position],region:s.travel?.region||'home',yaw:s.yaw||0,day:s.day};
+ r.active={id,kind:dish.kind,phase:dish.kind==='bath'?'wash-walk':'ready',paused:false,done:0,remaining:0,elapsed:0,portionSeconds:(dish.kind==='habit'?p.snack:p[dish.kind]||p.meal)/(dish.portions||1),washSeconds:p.wash/3,rinseSeconds:p.rinse,soakSeconds:p.soak,drySeconds:p.dry,anchor:fixture?[fixture[0],1.65,fixture[1]]:[...s.position],region:s.travel?.region||'home',yaw:s.yaw||0,day:s.day};
  return true;
 }
 export function routineTarget(a){if(a.phase==='wash-walk')return a.id==='publicBath'?[-95,31]:a.id==='hotelBath'?[5.2,-1.5]:[a.anchor[0],a.anchor[2]];if(a.phase==='soak-walk')return a.id==='publicBath'?[-90,34]:[7,-3];return null;}
@@ -115,7 +121,7 @@ export function routineInput(s){
  if(a.phase==='dry-ready'){a.phase='drying';a.remaining=a.drySeconds;return true;}
  return false;
 }
-function finishRoutine(s,a){const r=ensureRoutines(s),dish=DISHES[a.id];if(a.kind==='bath'){r.baths++;ensureDeluxe(s).hygiene=100;if(a.id==='shower')s.energy=Math.min(100,s.energy+10);s.mood=Math.min(100,s.mood+8);}else if(a.kind==='cook'){const t=ensureTown(s);t.meals++;if(!t.achievements.includes('first-meal'))t.achievements.push('first-meal');}else if(dish.kind!=='drink'){r.meals++;r.lastMealDay=s.day;r.lastMealMinutes=s.minutes;if(!s.completed.includes('eat'))s.completed.push('eat');}if(a.id==='coffee'&&!s.completed.includes('coffee'))s.completed.push('coffee');r.active=null;return a.id;}
+function finishRoutine(s,a){const r=ensureRoutines(s),dish=DISHES[a.id];if(a.kind==='habit'){recordDaily(s,a.id);}else if(a.kind==='bath'){r.baths++;recordDaily(s,'bath');ensureDeluxe(s).hygiene=100;if(a.id==='shower')s.energy=Math.min(100,s.energy+10);s.mood=Math.min(100,s.mood+8);}else if(a.kind==='cook'){const t=ensureTown(s);t.meals++;recordDaily(s,'cook');if(!t.achievements.includes('first-meal'))t.achievements.push('first-meal');}else if(dish.kind!=='drink'){r.meals++;recordDaily(s,'meal');r.lastMealDay=s.day;r.lastMealMinutes=s.minutes;if(!s.completed.includes('eat'))s.completed.push('eat');}if(a.id==='coffee'&&!s.completed.includes('coffee'))s.completed.push('coffee');r.active=null;return a.id;}
 export function advanceRoutine(s,seconds){
  const r=ensureRoutines(s),a=r.active;if(!a||a.paused||!Number.isFinite(seconds)||seconds<=0)return null;
  const dt=Math.min(seconds,60);a.elapsed=Math.min(86399,a.elapsed+dt);
@@ -136,4 +142,4 @@ export function pauseRoutine(s){const a=ensureRoutines(s).active;if(a)a.paused=t
 export function resumeRoutine(s){const a=ensureRoutines(s).active;if(!a||!canResumeRoutine(s))return false;a.paused=false;ensureDeluxe(s).riding=false;return true;}
 export function discardRoutine(s){const r=ensureRoutines(s);if(!r.active)return false;r.active=null;return true;}
 export const routineLocksMovement=s=>{const a=s.routines?.active;return !!a&&!a.paused&&!['wash-walk','soak-walk'].includes(a.phase);};
-export function routineClockScale(s){const a=s.routines?.active;if(!a||a.paused)return 1;const dish=DISHES[a.id],total=a.kind==='bath'?a.washSeconds*3+a.rinseSeconds+(a.id==='shower'?0:a.soakSeconds)+a.drySeconds:a.portionSeconds*dish.portions;const minutes=a.kind==='bath'?(a.id==='shower'?10:30):a.kind==='cook'||a.kind==='meal'?20:5;return Math.min(1,minutes/(2*total));}
+export function routineClockScale(s){const a=s.routines?.active;if(!a||a.paused)return 1;const dish=DISHES[a.id],total=a.kind==='bath'?a.washSeconds*3+a.rinseSeconds+(a.id==='shower'?0:a.soakSeconds)+a.drySeconds:a.portionSeconds*dish.portions;const minutes=a.kind==='bath'?(a.id==='shower'?10:30):a.kind==='habit'?(a.id==='study'?30:10):a.kind==='cook'||a.kind==='meal'?20:5;return Math.min(1,minutes/(2*total));}

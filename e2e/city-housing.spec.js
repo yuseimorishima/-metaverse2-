@@ -1,6 +1,7 @@
+import {freshTravel} from '../src/travel.js';
 import {test,expect} from '@playwright/test';
 import {freshHousing} from '../src/housing.js';
-const seed=(position=[0,1.65,9],extra={})=>({version:1,worldLayout:2,day:1,minutes:600,money:10000,hunger:85,thirst:85,energy:95,mood:70,inventory:{bread:2,apple:1,coffee:3},completed:[],workedDay:0,position,yaw:0,pitch:-.1,travel:{region:'home',funds:60000,ticket:null,journey:null,stay:null,visited:[]},...extra});
+const seed=(position=[0,1.65,9],extra={})=>({version:1,worldLayout:2,day:1,minutes:600,money:10000,hunger:85,thirst:85,energy:95,mood:70,inventory:{bread:2,apple:1,coffee:3},completed:[],workedDay:0,position,yaw:0,pitch:-.1,travel:freshTravel(),...extra});
 async function load(page,s){await page.addInitScript(s=>{if(!localStorage.getItem('komorebi-life-v1'))localStorage.setItem('komorebi-life-v1',JSON.stringify(s));},s);await page.goto('/');await page.locator('#continue').click();}
 const state=page=>page.evaluate(()=>window.komorebi.getState());
 async function walk(page,key,axis,compare,limit){await page.keyboard.down(key);try{await expect.poll(async()=>(await state(page)).position[axis],{timeout:30000})[compare](limit);}finally{await page.keyboard.up(key);}}

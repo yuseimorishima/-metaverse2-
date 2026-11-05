@@ -1,3 +1,4 @@
+import {recordDaily} from './daily.js';
 import {LAYOUT} from './geography.js';
 export const DISTRICTS = {
  cafe: {name:'森のカフェ · 店内',spawn:[LAYOUT.cafe.x,1.65,LAYOUT.cafe.z+6],yaw:0,minutes:5,description:'マスターとの会話、カフェの手伝い、おいしい一杯。'},
@@ -22,14 +23,14 @@ export function spendTime(s,minutes){s.minutes+=minutes;while(s.minutes>=1440){s
 export function plotStage(s){const p=ensureTown(s).plot;return !p?'empty':p.wateredAt===null?'dry':absoluteMinutes(s)-p.wateredAt>=60-1e-6?'ripe':'growing';}
 export function plantSeeds(s){const t=ensureTown(s);if(s.travel?.region!=='garden'||t.plot||t.seeds<1)return false;t.seeds--;t.plot={plantedAt:absoluteMinutes(s),wateredAt:null};return true;}
 export function waterPlot(s){const t=ensureTown(s);if(s.travel?.region!=='garden'||!t.plot||t.plot.wateredAt!==null)return false;t.plot.wateredAt=absoluteMinutes(s);return true;}
-export function harvest(s){const t=ensureTown(s);if(s.travel?.region!=='garden'||plotStage(s)!=='ripe')return false;t.tomatoes+=3;t.plot=null;award(t,'first-harvest');return true;}
+export function harvest(s){const t=ensureTown(s);if(s.travel?.region!=='garden'||plotStage(s)!=='ripe')return false;t.tomatoes+=3;t.plot=null;award(t,'first-harvest');recordDaily(s,'garden');return true;}
 export function buySeeds(s){const t=ensureTown(s);if(s.travel?.region!=='garden'||s.money<150)return false;s.money-=150;t.seeds+=3;return true;}
 export function rentRod(s){const t=ensureTown(s);if(s.travel?.region!=='waterfront'||t.rod||s.money<500)return false;s.money-=500;t.rod=true;return true;}
-export function catchFish(s,successful){const t=ensureTown(s);if(s.travel?.region!=='waterfront'||!t.rod||s.energy<5)return false;spendTime(s,10);if(successful){t.fish++;award(t,'first-fish');}return true;}
+export function catchFish(s,successful){const t=ensureTown(s);if(s.travel?.region!=='waterfront'||!t.rod||s.energy<5)return false;spendTime(s,10);if(successful){t.fish++;award(t,'first-fish');recordDaily(s,'fish');}return true;}
 export function sellFish(s){const t=ensureTown(s);if(s.travel?.region!=='waterfront'||!t.fish)return false;s.money+=t.fish*300;t.fish=0;return true;}
 export function cookMeal(s){const t=ensureTown(s);if(!['home','residential'].includes(s.travel?.region)||t.tomatoes<1||(!s.inventory.bread&&!t.fish))return false;t.tomatoes--;if(t.fish)t.fish--;else s.inventory.bread--;t.meals++;spendTime(s,20);award(t,'first-meal');return true;}
 export function eatMeal(s){const t=ensureTown(s);if(!t.meals)return false;t.meals--;s.hunger=Math.min(100,s.hunger+65);s.thirst=Math.min(100,s.thirst+15);s.mood=Math.min(100,s.mood+12);return true;}
 export function deliverProduce(s){const t=ensureTown(s);if(s.travel?.region!=='cafe'||t.deliveryDay===s.day||t.tomatoes<2)return false;t.tomatoes-=2;t.deliveryDay=s.day;s.money+=900;award(t,'delivery');return true;}
-export function townShift(s,job){const t=ensureTown(s);if(!['cafe','library'].includes(job)||s.travel?.region!==job||t.jobDays[job]===s.day||s.energy<25)return false;t.jobDays[job]=s.day;spendTime(s,120);s.energy=Math.max(0,s.energy-10);s.money+=job==='cafe'?1800:1400;award(t,`${job}-shift`);return true;}
+export function townShift(s,job){const t=ensureTown(s);if(!['cafe','library'].includes(job)||s.travel?.region!==job||t.jobDays[job]===s.day||s.energy<25)return false;t.jobDays[job]=s.day;spendTime(s,120);s.energy=Math.max(0,s.energy-10);s.money+=job==='cafe'?1800:1400;award(t,`${job}-shift`);recordDaily(s,'work');return true;}
 export function takePhoto(s){const t=ensureTown(s);if(s.travel?.region!=='hill')return false;const id=`day-${s.day}`;if(t.photos.includes(id))return false;t.photos.push(id);s.mood=Math.min(100,s.mood+18);award(t,'panorama');return true;}
 export function talk(s,id){const t=ensureTown(s);if(!Object.hasOwn(NPCS,id))return false;if(!t.talked.includes(id))t.talked.push(id);s.mood=Math.min(100,s.mood+4);return true;}

@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
-import {HOTEL_NAME} from './travel.js';
-export function createTravelWorld(root,region) {
+import {HOTELS} from './travel.js';
+export function createTravelWorld(root,region,hotel=HOTELS.kadensho) {
  const colliders=[],interactables=[],lamps=[],dynamic=[];
  const cache=new Map();
  function mat(color,extra={}) {const key=color+JSON.stringify(extra);if(!cache.has(key))cache.set(key,new THREE.MeshStandardMaterial({color,roughness:.8,...extra}));return cache.get(key);}
@@ -84,7 +84,7 @@ export function createTravelWorld(root,region) {
   for(const y of [1,2.8,4.7])box(-12,y,4.08,15,.12,.15,'#746044');
   box(-12,5.1,0,16,.25,9,'#505c55');for(let x=-20;x<-4;x+=.4)box(x,5.26,0,.12,.1,9.2,'#667268');
   box(-10,1.4,4.1,3,2.8,.1,'#344a40');for(const x of [-10.9,-10.3,-9.7,-9.1])box(x,2.15,4.24,.56,1.3,.035,'#526950');sign('花 伝 抄',-10,2.2,4.3,1.6,0,'#526950');
-  sign(HOTEL_NAME,-14.5,2.2,4.21,4);interact('hotel-enter','温泉宿 · ロビーへ入る',-10,1.5,5.2,3);
+  sign(hotel.name,-14.5,2.2,4.21,4);interact('hotel-enter','温泉宿 · ロビーへ入る',-10,1.5,5.2,3);
   for(const x of [-17,-6]){box(x,.8,5, .5,1.6,.5,'#786e55');box(x,1.55,5,.65,.6,.65,mat('#f0deae',{emissive:'#e7c485',emissiveIntensity:.4}));}
   sign('嵯峨嵐山駅  →  京都',6,2.3,16.5,3.4,Math.PI);interact('local-train','嵯峨嵐山駅 · 京都駅へ戻る',6,1.5,16,3);
  }
@@ -104,12 +104,12 @@ export function createTravelWorld(root,region) {
  else if(region==='room') {
   ground(80,80,'#92a47e');bounds={minX:-7.5,maxX:10,minZ:-8,maxZ:9};
   box(0,-.08,0,16,.2,19,'#aa9571');box(0,3.05,2,16,.15,15,'#d8cfb6');
-  for(let x=-6;x<=4;x+=2)for(let z=-3;z<=7;z+=3){box(x,.045,z,1.97,.045,2.97,'#c3bc8d');box(x-.97,.072,z,.035,.012,2.98,'#6b7959');}
-  box(-8,1.5,1,.12,3,18,'#d4ccb0',true);box(0,1.5,9.5,16,3,.1,'#d4ccb0',true);
+  for(let x=-6;x<=4;x+=2)for(let z=-3;z<=7;z+=3){box(x,.045,z,1.97,.045,2.97,hotel.floor);box(x-.97,.072,z,.035,.012,2.98,'#6b7959');}
+  box(-8,1.5,1,.12,3,18,hotel.wall,true);box(0,1.5,9.5,16,3,.1,hotel.wall,true);
   for(let x=-7.8;x<8;x+=1.3){box(x,1.5,9.4,.045,2.9,.06,'#9d8964');box(x,1.4,-5,.09,2.8,.1,'#846e50');}
   for(const y of [.7,1.5,2.3])box(0,y,9.38,16,.045,.06,'#a18a61');
   // Futon, zabuton, tea service, tokonoma, shoji and a garden-facing veranda.
-  for(const x of [-4.5,-1.3]){box(x,.14,2,2.2,.25,3.6,'#f1ead5',true,true);box(x,.32,2.35,2.15,.15,2.6,'#d5d3ba',false,true);box(x,.32,.7,1.1,.2,.55,'#ede8d8',false,true);}
+  const bedRaise=hotel.style==='townhouse'?.3:0;for(const x of [-4.5,-1.3]){if(bedRaise)box(x,.7,.2,2.2,1.1,.15,'#9b8464');box(x,.14+bedRaise,2,2.2,.25,3.6,'#f1ead5',true,true);box(x,.32+bedRaise,2.35,2.15,.15,2.6,hotel.linen,false,true);box(x,.32+bedRaise,.7,1.1,.2,.55,'#ede8d8',false,true);}
   interact('hotel-sleep','布団 · 翌朝まで眠る',-3,.6,3.5,2.6);
   box(3,.4,2,2.5,.12,1.5,'#9b7b51',true,true);for(const x of [1.5,4.5])box(x,.13,2,.8,.2,.8,'#788369',false,true);
   cylinder(3,.51,2,.23,.08,'#d5c8a2');for(const x of [2.5,3.5])cylinder(x,.57,2,.1,.2,'#d4dbb9');interact('hotel-tea','お茶 · 庭を眺めてひと休み',3,.8,2,2.4);

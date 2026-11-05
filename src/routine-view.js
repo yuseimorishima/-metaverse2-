@@ -19,6 +19,12 @@ export function createRoutineView(camera){
    for(let i=0;i<12;i++){const b=new THREE.Mesh(new THREE.SphereGeometry(.13,10,7),vaporMat);b.position.set((i%4-1.5)*.28,-.55+(i%3)*.12,-.9-(i%3)*.15);b.scale.set(1,.5,1);root.add(b);steam.push(b);}
    return;
   }
+  if(a.kind==='habit'){
+   if(a.id==='clean'){box(tool,.12,-.24,-.75,.028,.55,.028,'#ad9473');box(tool,.12,-.52,-.75,.28,.06,.12,'#c2b38a');for(let i=0;i<7;i++)box(tool,.005+i*.038,-.57,-.75,.025,.07,.1,'#d0c394');}
+   else if(a.id==='study'){box(root,0,-.44,-.7,.58,.035,.35,'#698b78');for(const x of [-.145,.145]){box(root,x,-.415,-.7,.275,.02,.32,'#ede8d5');for(let i=0;i<5;i++)box(root,x,-.402,-.81+i*.047,.2,.002,.005,'#b4bba3');}box(tool,.22,-.34,-.65,.01,.01,.2,'#7e8e76');}
+   else box(root,-.35,-.38,-.55,.085,.09,.27,'#cfae94');
+   return;
+  }
   if(dish.kind==='drink'){
    cup=new THREE.Group();root.add(cup);cylinder(cup,.04,-.39,-.6,.092,.18,'#dfddcb');cylinder(cup,.04,-.293,-.6,.078,.008,'#52685a');
    for(let i=0;i<3;i++)chunks.push(cylinder(cup,.04,-.32+i*.012,-.6,.074,.012,['coffee','cafeCoffee'].includes(a.id)?'#6e5137':'#a0b4a0'));
@@ -53,6 +59,7 @@ export function createRoutineView(camera){
    for(const[b,i]of bubbles.map((b,i)=>[b,i])){b.visible=washing;b.position.y=-.35+Math.sin(a.elapsed*3+i)*.025;}
    for(const[b,i]of steam.map((b,i)=>[b,i])){b.visible=a.phase==='soaking';b.position.y=-.55+((a.elapsed*.08+i*.09)%1)*.7;}
   }
+  if(a.kind==='habit'){hand.position.x=chewing?Math.sin(a.elapsed*3)*.08:0;hand.position.y=chewing?Math.sin(a.elapsed*2)*.04:0;}
   if(a.kind==='cook'){tool.visible=a.done===0;hand.visible=a.done!==1;tool.position.y=chewing?Math.sin(a.elapsed*10)*.025:0;chunks.forEach(c=>{c.visible=a.done===0;});cookPan.visible=a.done===1;cookPlate.visible=a.done===2;cookSteam.forEach((p,i)=>{p.visible=a.done===1&&chewing;p.position.y=-.32+((a.elapsed*.18+i*.04)%.3);});}
  }
  return {update};

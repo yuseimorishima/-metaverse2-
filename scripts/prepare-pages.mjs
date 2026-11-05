@@ -19,5 +19,5 @@ try {
  for(const[target,source]of files){const hash=run(['hash-object','-w','--',source]);run(['update-index','--add','--cacheinfo',`100644,${hash},${target}`]);}
  const tree=run(['write-tree']);
  if(parent&&tree===run(['rev-parse',`${parent}^{tree}`])){console.log(`Deployment already contains this game: ${parent}`);}
- else{const args=['-c','user.name=Codex','-c','user.email=codex@localhost','commit-tree',tree];if(parent)args.push('-p',parent);args.push('-m','Add hands-on meals and bathing with service hours and saved progress');const commit=run(args);run(['update-ref','refs/heads/komorebi-site',commit,local||'0000000000000000000000000000000000000000']);console.log(`Prepared komorebi-site at ${commit}; working checkout and index unchanged.`);}
+ else{const args=['-c','user.name=Codex','-c','user.email=codex@localhost','commit-tree',tree];if(parent)args.push('-p',parent);args.push('-m','Add travel booking site, shared wallet and daily life plans');const commit=run(args);run(['update-ref','refs/heads/komorebi-site',commit,local||'0000000000000000000000000000000000000000']);console.log(`Prepared komorebi-site at ${commit}; working checkout and index unchanged.`);}
 } finally {rmSync(dir,{recursive:true,force:true});}
