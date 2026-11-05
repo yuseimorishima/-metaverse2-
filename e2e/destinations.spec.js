@@ -1,0 +1,27 @@
+import {test,expect} from '@playwright/test';
+import {newLife} from '../src/life.js';
+import {freshTravel,bookPackage,ensureTravel} from '../src/travel.js';
+import {TRIP_DESTINATIONS} from '../src/destinations.js';
+const state=page=>page.evaluate(()=>window.komorebi.getState());
+async function load(page,s){await page.addInitScript(s=>{if(!localStorage.getItem('komorebi-life-v1'))localStorage.setItem('komorebi-life-v1',JSON.stringify(s));},s);await page.goto('/');await page.locator('#continue').click();await expect(page.locator('.vignette')).toHaveCSS('opacity','0');}
+function seed(){return {...newLife(),worldLayout:2,money:100000,minutes:600,travel:freshTravel()};}
+async function walk(page,key,axis,compare,limit){await page.keyboard.down(key);try{await expect.poll(async()=>(await state(page)).position[axis],{timeout:30000,intervals:[100]})[compare](limit);}finally{await page.keyboard.up(key);}}
+for(const d of Object.values(TRIP_DESTINATIONS)){
+ test(`${d.id}: book from the travel site, walkable sightseeing, save and prepaid return`,async({page})=>{
+  test.setTimeout(90000);const errors=[];page.on('pageerror',e=>errors.push(e.message));const s=seed();s.travel.region='tokyo';s.position=[-3.7,1.65,14.5];await load(page,s);
+  await page.keyboard.press('KeyJ');await page.locator('#site-destination').selectOption(d.id);await expect(page.locator('.hotel-card')).toHaveCount(2);await expect(page.locator('.daytrip-card')).toContainText(d.name);await page.locator('[data-action="site-package-daytrip"]').click();expect((await state(page)).money).toBe(100000-d.fare*2);await page.locator('#close-panel').click();
+  await expect(page.locator('#interaction')).toContainText('観光路線');await page.keyboard.press('KeyE');await page.locator('[data-action="dest-ride"]').click();await expect(page.locator('#location')).toContainText(d.name);expect((await state(page)).travel.region).toBe(d.id);
+  await page.keyboard.press('KeyM');await expect(page.locator('.destination-map')).toBeVisible();await page.locator('#close-panel').click();const world=await page.evaluate(()=>window.komorebi.getWorld()),b=world.bounds,blocked=(x,z)=>world.colliders.some(c=>Math.abs(x-c.x)<c.w/2+.25&&Math.abs(z-c.z)<c.d/2+.25),key=(x,z)=>`${x},${z}`,queue=[[0,16]],seen=new Set(['0,16']);
+  for(let i=0;i<queue.length;i++){const[x,z]=queue[i];for(const[dx,dz]of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,nz=z+dz,k=key(nx,nz);if(nx<b.minX||nx>b.maxX||nz<b.minZ||nz>b.maxZ||seen.has(k)||blocked(nx,nz))continue;seen.add(k);queue.push([nx,nz]);}}
+  for(const poi of world.interactables)expect(seen.has(key(Math.round(poi.position[0]),Math.round(poi.position[2]))),`walkable ${poi.id}`).toBe(true);
+  await page.screenshot({path:`test-results/${d.id}-town.png`});await page.reload();await page.locator('#continue').click();expect((await state(page)).travel.region).toBe(d.id);expect((await state(page)).travel.excursion.return).toBe(true);
+  await page.mouse.move(1100,400);await page.mouse.down();await page.mouse.move(314.6,400);await page.mouse.up();await walk(page,'KeyW',2,'toBeGreaterThan',18.2);
+  await expect(page.locator('#interaction')).toContainText('東京へ帰る');await page.keyboard.press('KeyE');await page.locator('[data-action="dest-ride"]').click();expect((await state(page)).travel.region).toBe('tokyo');expect((await state(page)).money).toBe(100000-d.fare*2);expect((await state(page)).travel.excursion).toBeNull();expect(errors).toEqual([]);
+ });
+ test(`${d.id}: enter a hotel on foot, check in and leave at the same doorway`,async({page})=>{
+  test.setTimeout(90000);const s=seed(),h=d.hotels[0];ensureTravel(s);bookPackage(s,'overnight',h.id,1);s.travel.region=d.id;s.position=[-18,1.65,9.5];s.yaw=0;const paid=s.money;await load(page,s);
+  await expect(page.locator('#interaction')).toContainText(h.name);await page.keyboard.press('KeyE');expect((await state(page)).travel.region).toBe('hotel');await expect(page.locator('#location')).toContainText(h.name);await walk(page,'KeyW',2,'toBeLessThan',-.8);await page.keyboard.press('KeyE');await page.locator('[data-action="trip-checkin"]').click();expect((await state(page)).money).toBe(paid);
+  await page.keyboard.press('KeyJ');await page.locator('[data-action="site-tab-bookings"]').click();await expect(page.locator('.bookings')).toContainText(h.name);await page.locator('#close-panel').click();
+  await walk(page,'KeyS',2,'toBeGreaterThan',6.2);await page.mouse.move(1100,400);await page.mouse.down();await page.mouse.move(314.6,400);await page.mouse.up();await expect(page.locator('#interaction')).toContainText('街へ出る');await page.keyboard.press('KeyE');expect((await state(page)).travel.region).toBe(d.id);expect((await state(page)).position[0]).toBeCloseTo(-18);expect((await state(page)).position[2]).toBeCloseTo(9.5);
+ });
+}

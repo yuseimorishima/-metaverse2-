@@ -1,6 +1,7 @@
+import {TRIP_DESTINATIONS} from './destinations.js';
 import {isLocalRegion} from './geography.js';
 import {LOTS} from './housing.js';
-export const DAILY_TASKS={meal:'ゆっくり食事をする',bath:'お風呂で体を整える',cook:'ひと皿、料理を作る',work:'仕事をひとつ終える',garden:'野菜を収穫する',fish:'魚を釣る',photo:'丘で写真を撮る',clean:'家を掃除する',stretch:'ストレッチする',study:'本で学習する',laundry:'洗濯物を受け取る',trip:'嵐山を訪れる',walk:'300m歩いて街を巡る'};
+export const DAILY_TASKS={meal:'ゆっくり食事をする',bath:'お風呂で体を整える',cook:'ひと皿、料理を作る',work:'仕事をひとつ終える',garden:'野菜を収穫する',fish:'魚を釣る',photo:'風景の写真を撮る',clean:'家を掃除する',stretch:'ストレッチする',study:'本で学習する',laundry:'洗濯物を受け取る',trip:'旅先を訪れる',walk:'300m歩いて街を巡る'};
 export const DAILY_PLANS={
  slow:{name:'ゆっくり暮らす日',description:'ごはんと家のこと、自分の時間を大切に。',goals:['meal','clean','study','bath']},
  work:{name:'仕事と家事の日',description:'働いて、洗濯して、夜はお風呂でひと息。',goals:['work','laundry','meal','bath']},
@@ -21,7 +22,7 @@ export function insideHome(s){if(!isLocalRegion(s.travel?.region))return false;c
 export function habitAvailability(s,id){const d=ensureDaily(s),home=insideHome(s),region=s.travel?.region;if(d.counts[id])return {ok:false,reason:'今日はもう終えています。また明日、続けましょう。'};
  if(id==='clean'&&!home)return {ok:false,reason:'自宅の部屋に入ってから掃除しましょう。'};
  if(id==='study'&&!home&&!['library','cafe','room'].includes(region))return {ok:false,reason:'自宅・図書館・カフェ・宿の客室で学習できます。'};
- if(id==='stretch'&&!home&&!['garden','hill','waterfront','room'].includes(region)&&!(isLocalRegion(region)&&Math.hypot(s.position[0]+28,s.position[2]-34)<12))return {ok:false,reason:'自宅・公園・水辺・農園・丘・宿の客室で体を動かせます。'};
+ if(id==='stretch'&&!TRIP_DESTINATIONS[region]&&!home&&!['garden','hill','waterfront','room'].includes(region)&&!(isLocalRegion(region)&&Math.hypot(s.position[0]+28,s.position[2]-34)<12))return {ok:false,reason:'自宅・公園・水辺・農園・丘・宿の客室で体を動かせます。'};
  return {ok:true,reason:'E または体験カードで、3つの工程を進めましょう。'};
 }
 const stamp=s=>s.day*1440+s.minutes;

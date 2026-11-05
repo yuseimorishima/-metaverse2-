@@ -1,8 +1,11 @@
+import {createDestinationWorld} from './destination-world.js';
+import {TRIP_DESTINATIONS} from './destinations.js';
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {HOTELS} from './travel.js';
 export function createTravelWorld(root,region,hotel=HOTELS.kadensho) {
+ if(TRIP_DESTINATIONS[region])return createDestinationWorld(root,region);
  const colliders=[],interactables=[],lamps=[],dynamic=[];
  const cache=new Map();
  function mat(color,extra={}) {const key=color+JSON.stringify(extra);if(!cache.has(key))cache.set(key,new THREE.MeshStandardMaterial({color,roughness:.8,...extra}));return cache.get(key);}
@@ -30,6 +33,7 @@ export function createTravelWorld(root,region,hotel=HOTELS.kadensho) {
   sign(tokyo?'東海道新幹線  19番線  京都・新大阪方面':'東海道新幹線  12番線  名古屋・東京方面',0,2.65,-14,8);
   sign('こだま  指定席  6号車  ｜  ゲーム内ダイヤ',0,2.1,-13.99,7,0,'#172c29','#e5d58d');
   box(-4.6,.8,6,1.1,1.6,.65,'#e7e6dd',true,true);box(-4.6,1.13,6.34,.78,.55,.03,'#44766a');sign('きっぷ',-4.6,1.82,6.35,1.2);interact('rail-ticket','券売機 · 新幹線のきっぷを買う',-4.6,1.35,6.4,2.6);
+  if(tokyo){sign('観光路線 / 旅先へ',-3.7,2.3,12.5,3);interact('excursion-station','観光路線 · 予約した街へ',-3.7,1.4,12.5,3);}
   bench(-3,-7);bench(-3,0);
   // Streamlined train parked alongside the platform.
   box(7.2,1.55,0,3.4,3,30,'#eeeee8',false,true);for(const x of [5.48,8.92]){box(x,1.1,0,.035,.14,27,'#355d83');for(let z=-12;z<13;z+=2.3)box(x,1.95,z,.04,.68,1.45,'#638d9c',false,true);}
@@ -97,7 +101,7 @@ export function createTravelWorld(root,region,hotel=HOTELS.kadensho) {
   for(const x of [-5.5,5.5]){bench(x,2,3);box(x,.4,4,2,.12,1,'#b59a70',true);cylinder(x,.55,4,.18,.18,'#e2ddc3');}
   sign('客室・露天風呂  →',5.5,2.2,-4,3.5);interact('hotel-room','客室と露天風呂へ',5.5,1.5,-4,2.7);
   sign('お食事処',-5.5,2.2,-4,2.4);interact('hotel-dinner','食事処 · 宿泊のお食事',-5.5,1.4,-4,2.7);
-  sign('嵐山の街へ',0,2.3,9.5,3,Math.PI);interact('hotel-exit','玄関 · 嵐山の街へ出る',0,1.5,8.3,2.6);
+  const city=TRIP_DESTINATIONS[hotel.destination]?.name||'嵐山';sign(city+'の街へ',0,2.3,9.5,3,Math.PI);interact('hotel-exit','玄関 · '+city+'の街へ出る',0,1.5,8.3,2.6);
   for(const x of [-5,0,5]){box(x,2.8,1,.8,.6,.8,'#d5c6a0',false,true);light(x,2.4,1);}
   for(const x of [-15,15]){tree(x,-5,1.3);tree(x,7,1);box(x,.04,1,5,.08,8,'#aeb791');orb(x,.5,1,1,'#8c9483',1,.5,.8);}
  }
@@ -121,6 +125,7 @@ export function createTravelWorld(root,region,hotel=HOTELS.kadensho) {
   box(10.05,.5,-3,.15,.7,5.2,'#b5a076');for(const z of [-4.85,-1.15])box(5.95,.5,z,.15,.7,1.5,'#b5a076');box(5.75,.12,-3,.8,.24,1.3,'#b5a076');box(6.35,.3,-3,.6,.25,1.3,'#b5a076');for(const z of [-5.55,-.45])box(8,.5,z,4.2,.7,.15,'#b5a076');
   interact('hotel-bath','露天風呂 · 湯けむりに包まれる',5.55,1.3,-3,2.8);
   const steam=new THREE.Group();root.add(steam);for(let i=0;i<7;i++){const o=new THREE.Mesh(new THREE.SphereGeometry(.5,10,8),mat('#edf1e6',{transparent:true,opacity:.08,depthWrite:false}));o.position.set(7+(i%3)*.7,.8+i*.2,-4+(i%4)*.6);o.scale.set(1,.65,1);steam.add(o);}dynamic.push({object:steam,kind:'steam'});
+  if(hotel.view){if(['sea','lake','port'].includes(hotel.view)){box(0,.06,-18,50,.08,20,'#779eaa');for(let i=0;i<10;i++)box(-20+i*4,.11,-12-i%3*3,2,.015,.035,'#c9ddd6');}if(['city','port'].includes(hotel.view))for(let i=0;i<8;i++)box(-21+i*6,2+i%3,-25,4,6+i%3*3,4,'#a7bdb6');box(-6,2.7,-3.6,3,.08,.35,'#b49a72');for(let i=0;i<8;i++)box(-7.2+i*.32,2.9,-3.6,.2,.4,.28,['#80978a','#ac9b7c','#8d919c'][i%3]);}
   for(const x of [-13,-8,2,14])tree(x,-14,1.2);for(let i=0;i<8;i++)mountain(-50+i*15,-35,15,9+i%3*3,'#7f9478');
   sign('ロビーへ',0,2.1,9.35,2.3,Math.PI);interact('hotel-lobby','客室の入口 · ロビーへ戻る',0,1.4,8,2.5);light(0,2.6,3);light(4,2.4,-2);
  }
