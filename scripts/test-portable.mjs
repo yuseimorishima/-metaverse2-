@@ -1,0 +1,37 @@
+import {chromium,expect} from '@playwright/test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
+const browser=await chromium.launch({headless:true,executablePath:'/usr/bin/chromium',args:['--no-sandbox','--enable-unsafe-swiftshader','--use-angle=swiftshader']});
+try {
+ const page=await browser.newPage({viewport:{width:1100,height:760}});
+ const errors=[],externalRequests=[];
+ page.on('pageerror',e=>{errors.push(e.message);console.error(e.message);});
+ page.on('request',r=>{if(/^https?:/.test(r.url())&&r.url()!=='http://localhost:4179/KOMOREBI.html')externalRequests.push(r.url());});
+ const html=await readFile(resolve('dist/KOMOREBI.html'),'utf8');
+ const documentUrl='http://localhost:4179/KOMOREBI.html';
+ await page.route('**/*',route=>route.request().url()===documentUrl?route.fulfill({status:200,contentType:'text/html',body:html}):route.abort());
+ await page.goto(documentUrl);
+ await expect(page.locator('#loading')).toHaveCount(0);
+ await expect(page.locator('canvas')).toBeVisible();
+ await page.locator('#start').click();
+ await expect(page.locator('#hud')).toBeVisible();
+ if(await page.locator('#pause').isVisible())await page.locator('#resume').click();
+ await page.mouse.move(500,350);await page.mouse.down();await page.mouse.move(600,370);await page.mouse.up();assert.ok(await page.evaluate(()=>window.komorebi.getState().yaw<-.3));
+ const beforeGuide=await page.evaluate(()=>window.komorebi.getState().position);await page.locator('#town-button').click();await page.locator('[data-action="town-go-library"]').click();assert.equal(await page.evaluate(()=>window.komorebi.getState().travel.region),'home');assert.deepEqual((await page.evaluate(()=>window.komorebi.getState().position)).filter((_,i)=>i!==1),beforeGuide.filter((_,i)=>i!==1));await expect(page.locator('#navigation-name')).toContainText('図書館');await page.locator('#house-button').click();await expect(page.locator('[data-action="house-buy-maple"]')).toBeVisible();await page.locator('#close-panel').click();
+ await page.locator('#deluxe-button').click();await expect(page.locator('.deluxe-weather')).toBeVisible();await page.locator('[data-action="deluxe-buy-umbrella"]').click();assert.equal(await page.evaluate(()=>window.komorebi.getState().deluxe.umbrella),true);
+ await page.keyboard.press('KeyI');
+ await page.locator('[data-action="eat-bread"]').click();
+ assert.equal(await page.evaluate(()=>window.komorebi.getState().inventory.bread),1);
+ await page.locator('#routine-act').click();await page.screenshot({path:'dist/meal-preview.png'});await page.setViewportSize({width:390,height:844});await page.waitForTimeout(500);await page.screenshot({path:'dist/mobile-meal-preview.png'});await page.setViewportSize({width:1100,height:760});await expect.poll(()=>page.evaluate(()=>window.komorebi.getState().routines.active.done),{timeout:15000}).toBe(1);
+ await page.keyboard.press('KeyJ');
+ await page.locator('[data-action="trip-tokyo"]').click();
+ await expect(page.locator('#location')).toContainText('東京駅');
+ await page.reload();await page.locator('#continue').click();
+ assert.equal(await page.evaluate(()=>window.komorebi.getState().travel.region),'tokyo');
+ assert.equal(await page.evaluate(()=>window.komorebi.getState().inventory.bread),1);
+ assert.equal(await page.evaluate(()=>window.komorebi.getState().deluxe.umbrella),true);
+ assert.equal(await page.evaluate(()=>window.komorebi.getState().routines.active.done),1);assert.equal(await page.evaluate(()=>window.komorebi.getState().routines.active.paused),true);
+ assert.deepEqual(errors,[]);assert.deepEqual(externalRequests,[]);
+ console.log('PASS: self-contained HTML, drag, non-teleporting navigation, housing panel, deluxe weather and umbrella, a timed bite, travel, unfinished meal save/restore, zero external assets. Managed browser file:// navigation is blocked by administrator policy; HTML tested from an in-memory document.');
+} finally {await browser.close();}

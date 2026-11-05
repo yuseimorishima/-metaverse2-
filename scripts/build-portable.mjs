@@ -1,0 +1,16 @@
+import {build} from 'vite';
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
+const root=resolve(import.meta.dirname,'..');
+const result=await build({root,configFile:false,logLevel:'warn',build:{write:false,minify:true,lib:{entry:resolve(root,'src/main.js'),name:'Komorebi',formats:['iife']}}});
+const bundle=Array.isArray(result)?result[0]:result;
+const chunks=bundle.output.filter(item=>item.type==='chunk');
+if(chunks.length!==1)throw new Error('The portable game must contain exactly one JavaScript bundle.');
+const css=await readFile(resolve(root,'src/style.css'),'utf8');
+const js=chunks[0].code.replace(/<\/script/gi,'<\\/script');
+let html=await readFile(resolve(root,'index.html'),'utf8');
+html=html.replace('<link rel="stylesheet" href="/src/style.css">',()=>`<style>${css}</style>`).replace('<script type="module" src="/src/main.js"></script>',()=>`<script>${js}</script>`).replace('href="/"','href="./KOMOREBI.html"');
+if(html.includes('src="/src/')||html.includes('href="/src/'))throw new Error('A development asset remains in the portable game.');
+await mkdir(resolve(root,'dist'),{recursive:true});
+await writeFile(resolve(root,'dist/KOMOREBI.html'),html);
+console.log(`Portable game: ${resolve(root,'dist/KOMOREBI.html')} (${Math.round(Buffer.byteLength(html)/1024)} KiB)`);
