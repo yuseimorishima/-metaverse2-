@@ -5,6 +5,7 @@ export const TRIP_DESTINATIONS={
  hakone:{id:"hakone",name:"箱根",subtitle:"湖畔と温泉の休日",kind:"lake",fare:2200,minutes:110,accent:"#7e9b8d",description:"湖を囲む山々、鳥居とギャラリーを眺めながら歩く温泉の街。",hotels:[lodging("hakone_lake","箱根 湖畔のこもれび","standard",12800,true,"lodge","湖を望むツイン","lake"),lodging("hakone_suite","箱根 みずき温泉邸","deluxe",19800,true,"ryokan","湖畔の温泉スイート","lake")]},
  nikko:{id:"nikko",name:"日光",subtitle:"杉並木と森の散策",kind:"forest",fare:2800,minutes:130,accent:"#728c70",description:"杉並木の参道、森のお堂と滝を歩いて巡る静かな旅。",hotels:[lodging("nikko_lodge","日光 すぎの木ロッジ","standard",9800,true,"lodge","森のツインルーム","forest"),lodging("nikko_retreat","日光 森灯りの宿","deluxe",17800,true,"ryokan","木立の和洋スイート","forest")]},
  nara:{id:"nara",name:"奈良",subtitle:"鹿の公園と古都さんぽ",kind:"heritage",fare:13000,minutes:180,accent:"#9b9978",description:"鹿が過ごす公園、お堂と古都の道をゆったり歩く街。",hotels:[lodging("nara_guest","奈良 こみち町家ステイ","basic",5800,false,"townhouse","町家のベッドツイン","forest"),lodging("nara_garden","奈良 若葉ガーデンホテル","standard",11200,true,"lodge","庭を眺めるツイン","forest")]},
+ osaka:{id:"osaka",name:"大阪",subtitle:"川辺の展望塔と横丁",kind:"city",fare:14500,minutes:170,accent:"#a58b76",description:"川辺の街並み、展望塔とにぎわう横丁を歩いて楽しむ街。",hotels:[lodging("osaka_stay","大阪 かわまちステイ","basic",6200,false,"townhouse","街歩きのベッドツイン","city"),lodging("osaka_sky","大阪 リバースカイホテル","deluxe",16800,true,"ryokan","街明かりのスカイスイート","city")]},
  // NEXT_DESTINATION
 };
 export const EXTRA_HOTELS=Object.fromEntries(Object.values(TRIP_DESTINATIONS).flatMap(d=>d.hotels.map(h=>[h.id,{...h,destination:d.id}])));

@@ -59,7 +59,7 @@ export function checkIn(s){if(!canCheckIn(s))return false;const t=ensureTravel(s
 export function enterRoom(s){const t=ensureTravel(s);if(t.region!=='hotel'||!t.stay)return false;visit(s,'room');return true;}
 export function hotelDinner(s){const t=ensureTravel(s);if(!['hotel','room'].includes(t.region)||!t.stay||t.stay.dinnerDay===s.day)return false;const fee=hotelFor(s).meals?0:1800;if(s.money<fee)return false;s.money-=fee;t.stay.dinnerDay=s.day;advance(s,45);s.hunger=100;s.thirst=100;s.mood=Math.min(100,s.mood+15);return true;}
 export function bathe(s){const t=ensureTravel(s);if(t.region!=='room'||!t.stay)return false;advance(s,30);s.energy=Math.min(100,s.energy+30);s.mood=Math.min(100,s.mood+25);return true;}
-export function sleepAtHotel(s){const t=ensureTravel(s);if(t.region!=='room'||!t.stay||t.stay.rested)return false;t.stay.rested=true;if(!s.completed.includes('hotel-stay'))s.completed.push('hotel-stay');s.day++;s.minutes=420;s.energy=100;s.hunger=Math.max(10,s.hunger-20);s.thirst=Math.max(10,s.thirst-20);return true;}
+export function sleepAtHotel(s){const t=ensureTravel(s);if(t.region!=='room'||!t.stay||t.stay.rested)return false;t.stay.rested=true;const destination=hotelFor(s).destination;if(destination){t.memories.push(destination+':stay:'+s.day);t.memories=t.memories.slice(-100);}if(!s.completed.includes('hotel-stay'))s.completed.push('hotel-stay');s.day++;s.minutes=420;s.energy=100;s.hunger=Math.max(10,s.hunger-20);s.thirst=Math.max(10,s.thirst-20);return true;}
 export function checkOut(s){const t=ensureTravel(s);if(t.region!=='hotel'||!t.stay)return false;t.stay=null;return true;}
 
 export function bookExcursion(s,destination,day){const d=TRIP_DESTINATIONS[destination];return !!d&&bookPackage(s,'daytrip',d.hotels[0].id,day);}
