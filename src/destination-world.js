@@ -23,7 +23,7 @@ export function createDestinationWorld(root,id){
  function temple(x,z){box(x,.2,z,10,.4,5,'#b6ad91',true);for(const xx of [x-4,x+4])box(xx,1.9,z,.16,3.4,5,'#9a7558');box(x,1.9,z-2.4,8,3.4,.15,'#b59b74',true);for(const side of [-1,1]){const roof=box(x+side*2.8,4,z,6.3,.2,6.5,'#596c5b');roof.rotation.z=side*-.22;}gate(x,z+5);}
  if(d.kind==='coast'){box(0,-.005,-18,62,.06,8,'#d6c59d');temple(-18,-17);sign('海と参道の散歩道',0,2,-15,5);}
  if(lake){for(let i=0;i<8;i++){const m=new THREE.Mesh(new THREE.ConeGeometry(10,7+i%3*3,8),new THREE.MeshStandardMaterial({color:i%2?'#718e7b':'#8ba28d'}));m.position.set(-48+i*14,2,-53);root.add(m);}gate(-18,-18);box(19,.9,-16,8,1.8,7,'#c9d9d0',true);box(19,2.5,-16,9,.2,8,'#6c8b82');sign('湖畔ギャラリー',19,3,-12.4,5);}
- if(forest){temple(-18,-17);gate(0,-5);for(let i=0;i<10;i++){const x=-7+(i%2)*14,z=-10+Math.floor(i/2)*4;const tree=new THREE.Mesh(new THREE.ConeGeometry(1.2,6,8),new THREE.MeshStandardMaterial({color:'#52715a'}));tree.position.set(x,3,z);root.add(tree);}box(22,1.5,-18,5,3,.2,'#a9d7d0');for(const x of [19,25])ball(x,1.2,-18,2,'#889384');}
+ if(forest){temple(-18,-17);gate(0,-5);for(let i=0;i<10;i++){const x=-7+(i%2)*14,z=-18+Math.floor(i/2)*4;const tree=new THREE.Mesh(new THREE.ConeGeometry(1.2,6,8),new THREE.MeshStandardMaterial({color:'#52715a'}));tree.position.set(x,3,z);root.add(tree);}box(22,1.5,-18,5,3,.2,'#a9d7d0');for(const x of [19,25])ball(x,1.2,-18,2,'#889384');}
  if(d.kind==='heritage'){temple(-18,-17);gate(0,-5,'#8e7357');box(16,.01,-8,17,.08,12,'#9bab7e');}
  if(d.kind==='city'){
   for(let i=0;i<8;i++){const x=-29+i*8,h=5+i%4*2;box(x,h/2,-28,5,h,6,['#c0beb3','#becbd0','#d6c4ac'][i%3]);for(let y=2;y<h;y+=2)box(x,y,-24.95,3,.7,.04,'#9ec1bb');}
