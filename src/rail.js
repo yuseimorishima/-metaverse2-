@@ -5,7 +5,7 @@ export const TRAIN_SERVICES={
  local:{id:'local',name:'街めぐり普通列車',short:'普通列車',fareFactor:.7,timeFactor:1.5,color:'#6e998c',description:'お手頃な運賃。ベンチ席と広い出入口で、途中の街もゆっくり眺めます。',stops:4},
  express:{id:'express',name:'こもれび特急',short:'特急',fareFactor:1,timeFactor:1,color:'#577b98',description:'乗り換えなしで目的地へ。向かい合わせの座席と荷物棚のある、いつもの特急。',stops:2},
  panorama:{id:'panorama',name:'展望観光列車',short:'展望列車',fareFactor:1.3,timeFactor:1.2,color:'#b58b58',description:'大きな窓とラウンジのある車内。海や山を眺める時間も、旅の楽しみに。',stops:3},
- premium:{id:'premium',name:'プレミアム特急',short:'プレミアム',fareFactor:1.7,timeFactor:.8,color:'#816975',description:'幅広い1列ずつのシート、木の内装とサイドテーブル。静かな車内でゆったり。',stops:2},
+ premium:{id:'premium',name:'プレミアム特急',short:'プレミアム',fareFactor:1.7,timeFactor:.8,color:'#24483f',description:'幅広いソファ席、深い木目と真鍮の装飾、間接照明。テーブル付きの贅沢な車内でゆったり。',stops:2},
 };
 export const SEAT_CHOICES={window:'窓側を希望',aisle:'通路側を希望'};
 export function validRailOptions(service='express',seat='window'){return Object.hasOwn(TRAIN_SERVICES,service)&&Object.hasOwn(SEAT_CHOICES,seat);}

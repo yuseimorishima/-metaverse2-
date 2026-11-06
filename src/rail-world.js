@@ -1,3 +1,4 @@
+import {addPremiumInterior} from './premium-interior.js';
 import * as THREE from 'three';
 import {sceneKit} from './scene-kit.js';
 import {TRAIN_SERVICES,journeyInfo} from './rail.js';
@@ -7,17 +8,18 @@ export function createRailWorld(root,journey){
  const info=journeyInfo(journey),service=TRAIN_SERVICES[journey.service],kind=TRIP_DESTINATIONS[info.route]?.kind||'forest';
  const kit=sceneKit(root),{box,cyl,ball,sign,target}=kit,lamps=[];
  const panorama=journey.service==='panorama',premium=journey.service==='premium',local=journey.service==='local';
- const wood=premium||panorama;
- box(0,-.08,0,4,.18,24,wood?'#ac9271':'#a6b4af');
+ const wood=premium||panorama,halfWidth=premium?2.46:1.96;
+ box(0,-.08,0,premium?5:4,.18,24,premium?'#67503d':wood?'#ac9271':'#a6b4af');
  box(0,.025,0,.88,.025,23,premium?'#78686c':local?'#a1b0a2':'#718597');
- box(0,3.05,0,4,.12,24,wood?'#d4c4a7':'#e5e6dd');
- for(const x of [-1.96,1.96]){
+ box(0,3.05,0,premium?5:4,.12,24,wood?'#d4c4a7':'#e5e6dd');
+ for(const x of [-halfWidth,halfWidth]){
   box(x,.38,0,.1,.75,24,wood?'#b49a76':'#d6ded3',true);
   box(x,2.8,0,.1,.45,24,wood?'#c8b391':'#d7ded7');
   for(let z=-10.5;z<=11;z+=panorama?5:2.5){box(x,1.8,z,.1,2.1,.07,wood?'#9a8566':'#a6b9b4');}
   box(x*.9,2.55,0,.4,.08,21,wood?'#bdab8c':'#b5c2be');
  }
- if(local){
+ if(premium){lamps.push(...addPremiumInterior(root,kit));}
+ else if(local){
   for(const x of [-1.45,1.45])for(const z of [-7,-1,5]){
    box(x,.49,z,.65,.22,4.4,service.color,true);box(Math.sign(x)*1.79,1.03,z,.12,.95,4.4,'#668a7b');
    for(const dz of [-2.2,2.2]){cyl(Math.sign(x)*1.0,1.7,z+dz,.022,2.5,'#b7c6c0');}
@@ -25,11 +27,10 @@ export function createRailWorld(root,journey){
   for(let z=-8;z<9;z+=2){box(0,2.65,z,2.5,.045,.045,'#a5b9ad');for(const x of [-.65,.65]){cyl(x,2.45,z,.012,.4,'#c8d3c9');const ring=new THREE.Mesh(new THREE.TorusGeometry(.07,.012,6,12),new THREE.MeshStandardMaterial({color:'#e3e4d5'}));ring.position.set(x,2.2,z);root.add(ring);}}
  }else{
   const columns=journey.service==='express'?[-1.47,-.82,.82,1.47]:[-1.22,1.22];
-  for(const x of columns)for(let z=-8;z<8;z+=premium?2.8:2.4){
-   const width=journey.service==='express'?.5:premium?.88:.8;
-   box(x,.5,z,width,.25,1,service.color,true);box(x,1.08,z-.44,width,1.02,.19,service.color);box(x,1.58,z-.44,width*.78,.22,.22,premium?'#ddd1b6':'#e0dfce');
+  for(const x of columns)for(let z=-8;z<8;z+=2.4){
+   const width=journey.service==='express'?.5:.8;
+   box(x,.5,z,width,.25,1,service.color,true);box(x,1.08,z-.44,width,1.02,.19,service.color);box(x,1.58,z-.44,width*.78,.22,.22,'#e0dfce');
    for(const dx of [-width/2,width/2])box(x+dx,.78,z,.045,.09,.85,wood?'#b19a76':'#bac8c5');
-   if(premium){box(x,.18,z+.35,width*.8,.16,.45,'#766774');box(Math.sign(x)*1.78,.83,z,.28,.08,.9,'#baa17a');}
   }
  }
  if(panorama){
@@ -38,12 +39,12 @@ export function createRailWorld(root,journey){
  }else sign(service.name,0,2.6,-11.4,2.6);
  for(const z of [-11.6,11.6]){
   if(panorama&&z<0){box(0,.28,z,4,.56,.08,'#c6c8b5',true);box(0,2.85,z,4,.3,.08,'#c6c8b5');for(const x of [-1.9,1.9])box(x,1.6,z,.2,2.3,.08,'#9eab95');sign('前方の景色を楽しむ展望席',0,2.55,z+.08,2.4);}
-  else{box(0,1.5,z,4,3,.08,wood?'#c8b68f':'#d7ded5',true);box(0,1.4,z-Math.sign(z)*.06,1.15,2.4,.035,'#9ab4ad');}
+  else{box(0,1.5,z,premium?5:4,3,.08,premium?'#614a36':wood?'#c8b68f':'#d7ded5',true);box(0,1.4,z-Math.sign(z)*.06,1.15,2.4,.035,'#9ab4ad');}
  }
  target('train-exit','到着駅のデッキ · 降りる',0,1.4,-10.3,2.2);
- target('train-seat','指定席 · 車窓と列車の時間を楽しむ',1.05,1.3,6.7,2.3);
+ target('train-seat',premium?'プレミアムのソファ席 · ゆったり過ごす':'指定席 · 車窓と列車の時間を楽しむ',premium?1.45:1.05,1.3,premium?4.8:6.7,2.3);
  target('train-bento','車内サービス · 駅弁を食べる',-1.05,1.3,4.7,2.2);
- box(-1.3,.52,9.6,.8,1,1.1,'#8e9e94',true);box(-1.3,1.16,9.6,.6,.28,.7,'#c4baa0');
+ if(!premium){box(-1.3,.52,9.6,.8,1,1.1,'#8e9e94',true);box(-1.3,1.16,9.6,.6,.28,.7,'#c4baa0');}
  sign(journey.seat==='aisle'?'通路側のお席をご用意':'窓側のお席をご用意',0,2.65,9.4,2.3,Math.PI);
  for(const x of [-.65,.65])box(x,2.96,0,.09,.035,21,'#f2e6bf');
  for(const z of [-5,5]){const l=new THREE.PointLight(wood?'#ffdfaa':'#e5f0df',8,14,2);l.position.set(0,2.65,z);l.userData.indoor=true;root.add(l);lamps.push(l);}
@@ -66,5 +67,5 @@ export function createRailWorld(root,journey){
   }
   outside.merge();tile.position.z=offset;tiles.push(tile);
  }
- return {bounds:{minX:-1.7,maxX:1.7,minZ:-10.8,maxZ:10.8},colliders:kit.colliders,interactables:kit.interactables,lamps,update(dt,moving){if(moving)for(const tile of tiles){tile.position.z+=dt*(local?10:premium?27:18);if(tile.position.z>105)tile.position.z-=210;}return false;}};
+ return {bounds:{minX:premium?-2.2:-1.7,maxX:premium?2.2:1.7,minZ:-10.8,maxZ:10.8},colliders:kit.colliders,interactables:kit.interactables,lamps,update(dt,moving){if(moving)for(const tile of tiles){tile.position.z+=dt*(local?10:premium?27:18);if(tile.position.z>105)tile.position.z-=210;}return false;}};
 }
