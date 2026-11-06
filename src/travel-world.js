@@ -1,10 +1,12 @@
+import {createRailWorld} from './rail-world.js';
 import {createDestinationWorld} from './destination-world.js';
 import {TRIP_DESTINATIONS} from './destinations.js';
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {HOTELS} from './travel.js';
-export function createTravelWorld(root,region,hotel=HOTELS.kadensho) {
+export function createTravelWorld(root,region,hotel=HOTELS.kadensho,journey=null) {
+ if(region==='train'&&journey?.service)return createRailWorld(root,journey);
  if(TRIP_DESTINATIONS[region])return createDestinationWorld(root,region);
  const colliders=[],interactables=[],lamps=[],dynamic=[];
  const cache=new Map();

@@ -1,3 +1,4 @@
+import {arriveByRail} from './helpers/rail.js';
 import {test,expect} from '@playwright/test';
 import {newLife} from '../src/life.js';
 import {freshTravel,bookPackage,ensureTravel} from '../src/travel.js';
@@ -10,13 +11,13 @@ for(const d of Object.values(TRIP_DESTINATIONS)){
  test(`${d.id}: book from the travel site, walkable sightseeing, save and prepaid return`,async({page})=>{
   test.setTimeout(90000);const errors=[];page.on('pageerror',e=>errors.push(e.message));const s=seed();s.travel.region='tokyo';s.position=[-3.7,1.65,14.5];await load(page,s);
   await page.keyboard.press('KeyJ');await page.locator('#site-destination').selectOption(d.id);await expect(page.locator('.hotel-card')).toHaveCount(2);await expect(page.locator('.daytrip-card')).toContainText(d.name);await page.locator('[data-action="site-package-daytrip"]').click();expect((await state(page)).money).toBe(100000-d.fare*2);await page.locator('#close-panel').click();
-  await expect(page.locator('#interaction')).toContainText('観光路線');await page.keyboard.press('KeyE');await page.locator('[data-action="dest-ride"]').click();await expect(page.locator('#location')).toContainText(d.name);expect((await state(page)).travel.region).toBe(d.id);
+  await expect(page.locator('#interaction')).toContainText('観光路線');await page.keyboard.press('KeyE');await page.locator('[data-action="dest-ride"]').click();await arriveByRail(page);await expect(page.locator('#location')).toContainText(d.name);expect((await state(page)).travel.region).toBe(d.id);
   await page.keyboard.press('KeyM');await expect(page.locator('.destination-map')).toBeVisible();await page.locator('#close-panel').click();const world=await page.evaluate(()=>window.komorebi.getWorld()),b=world.bounds,blocked=(x,z)=>world.colliders.some(c=>Math.abs(x-c.x)<c.w/2+.25&&Math.abs(z-c.z)<c.d/2+.25),key=(x,z)=>`${x},${z}`,queue=[[0,16]],seen=new Set(['0,16']);
   for(let i=0;i<queue.length;i++){const[x,z]=queue[i];for(const[dx,dz]of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,nz=z+dz,k=key(nx,nz);if(nx<b.minX||nx>b.maxX||nz<b.minZ||nz>b.maxZ||seen.has(k)||blocked(nx,nz))continue;seen.add(k);queue.push([nx,nz]);}}
   for(const poi of world.interactables)expect(seen.has(key(Math.round(poi.position[0]),Math.round(poi.position[2]))),`walkable ${poi.id}`).toBe(true);
   await page.screenshot({path:`test-results/${d.id}-town.png`});await page.reload();await page.locator('#continue').click();expect((await state(page)).travel.region).toBe(d.id);expect((await state(page)).travel.excursion.return).toBe(true);
   await page.mouse.move(1100,400);await page.mouse.down();await page.mouse.move(314.6,400);await page.mouse.up();await walk(page,'KeyW',2,'toBeGreaterThan',18.2);
-  await expect(page.locator('#interaction')).toContainText('東京へ帰る');await page.keyboard.press('KeyE');await page.locator('[data-action="dest-ride"]').click();expect((await state(page)).travel.region).toBe('tokyo');expect((await state(page)).money).toBe(100000-d.fare*2);expect((await state(page)).travel.excursion).toBeNull();expect(errors).toEqual([]);
+  await expect(page.locator('#interaction')).toContainText('東京へ帰る');await page.keyboard.press('KeyE');await page.locator('[data-action="dest-ride"]').click();await arriveByRail(page);expect((await state(page)).travel.region).toBe('tokyo');await expect(page.locator('#navigation')).toBeHidden();expect((await state(page)).money).toBe(100000-d.fare*2);expect((await state(page)).travel.excursion).toBeNull();expect(errors).toEqual([]);
  });
  test(`${d.id}: enter a hotel on foot, check in and leave at the same doorway`,async({page})=>{
   test.setTimeout(90000);const s=seed(),h=d.hotels[0];ensureTravel(s);bookPackage(s,'overnight',h.id,1);s.travel.region=d.id;s.position=[-18,1.65,9.5];s.yaw=0;const paid=s.money;await load(page,s);

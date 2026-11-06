@@ -43,15 +43,15 @@ try {
  travelPage.on('request',r=>{if(/^https?:/.test(r.url())&&r.url()!==documentUrl)externalRequests.push(r.url());});
  await travelPage.route('**/*',route=>route.request().url()===documentUrl?route.fulfill({status:200,contentType:'text/html',body:html}):route.abort());
  const trip={...newLife(),worldLayout:2,money:60000,travel:freshTravel(),position:[4.2,1.65,4.6]};reserveHotel(trip,'hakone_lake',1);trip.travel.region='tokyo';
- await travelPage.addInitScript(s=>localStorage.setItem('komorebi-life-v1',JSON.stringify(s)),trip);
+ await travelPage.addInitScript(s=>{if(!localStorage.getItem('komorebi-life-v1'))localStorage.setItem('komorebi-life-v1',JSON.stringify(s));},trip);
  await travelPage.goto(documentUrl);await travelPage.locator('#continue').click();await travelPage.locator('#travel-button').click();
  await expect(travelPage.locator('#site-destination')).toHaveValue('hakone');
- await travelPage.locator('[data-action="site-excursion-hakone"]').click();
- assert.equal(await travelPage.evaluate(()=>window.komorebi.getState().money),42800);
+ await travelPage.locator('#site-service').selectOption('panorama');await travelPage.locator('#site-seat').selectOption('window');await travelPage.locator('[data-action="site-excursion-hakone"]').click();
+ assert.equal(await travelPage.evaluate(()=>window.komorebi.getState().money),41400);
  assert.equal(await travelPage.locator('#panel').evaluate(el=>el.scrollWidth<=el.clientWidth+1),true);
  await travelPage.screenshot({path:'dist/mobile-hakone-booking.png'});
- await travelPage.locator('#close-panel').click();await expect(travelPage.locator('#interaction')).toContainText('6号車');await travelPage.locator('#touch-interact').click();await travelPage.locator('[data-action="dest-ride"]').click();
- assert.equal(await travelPage.evaluate(()=>window.komorebi.getState().travel.region),'hakone');assert.equal(await travelPage.evaluate(()=>window.komorebi.getState().money),42800);assert.equal(await travelPage.evaluate(()=>window.komorebi.getState().travel.reservation.hotelId),'hakone_lake');
+ await travelPage.locator('#close-panel').click();await expect(travelPage.locator('#interaction')).toContainText('6号車');await travelPage.locator('#touch-interact').click();await travelPage.locator('[data-action="dest-ride"]').click();await expect(travelPage.locator('#train-service')).toContainText('展望観光');await travelPage.locator('#rail-short-rest').click();await travelPage.reload();await travelPage.locator('#continue').click();assert.equal(await travelPage.evaluate(()=>window.komorebi.getState().travel.journey.service),'panorama');await expect(travelPage.locator('#toast')).toContainText('展望観光');await travelPage.locator('#rail-rest').click();await travelPage.locator('#rail-exit').click();
+ assert.equal(await travelPage.evaluate(()=>window.komorebi.getState().travel.region),'hakone');assert.equal(await travelPage.evaluate(()=>window.komorebi.getState().money),41400);assert.equal(await travelPage.evaluate(()=>window.komorebi.getState().travel.reservation.hotelId),'hakone_lake');
  assert.deepEqual(errors,[]);assert.deepEqual(externalRequests,[]);
- console.log('PASS: self-contained HTML, drag, non-teleporting navigation, housing panel, deluxe weather and umbrella, a timed bite, daily plans, travel site, unfinished meal save/restore, mobile Hakone hotel-first rail booking and boarding, zero external assets. Managed browser file:// navigation is blocked by administrator policy; HTML tested from an in-memory document.');
+ console.log('PASS: self-contained HTML, drag, non-teleporting navigation, housing panel, deluxe weather and umbrella, a timed bite, daily plans, travel site, unfinished meal save/restore, mobile panorama train booking, carriage save/restore and alighting in Hakone, zero external assets. Managed browser file:// navigation is blocked by administrator policy; HTML tested from an in-memory document.');
 } finally {await browser.close();}

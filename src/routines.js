@@ -66,7 +66,7 @@ export function routineAvailability(s,id){
   else if(id==='dinner'&&t.stay.dinnerDay===s.day||id==='breakfast'&&ensureRoutines(s).breakfastDay===s.day)reason='今日のお食事は提供済みです。';
   else if(id==='breakfast'&&!t.stay.rested)reason='朝ごはんは宿泊の翌朝にご用意します。';
  }
- if(id==='bento'&&t?.region!=='train')reason='駅弁は新幹線の車内で購入します。';
+ if(id==='bento'&&t?.region!=='train')reason='駅弁は列車の車内で購入します。';
  if(id==='coffee'&&(!s.inventory.coffee||!(isLocalRegion(t?.region)&&((distance(s,-3.2,-5.2)<4)||nearbyHomeFixture(s,'kitchen')))))reason='豆を用意して、自宅のキッチンで淹れましょう。';
  if(id==='tea'&&(!['hotel','room'].includes(t?.region)||!t.stay))reason='宿泊の手続きをしたお部屋でどうぞ。';
  if(id==='cook'&&(!['home','residential'].includes(t?.region)||(!nearbyHomeFixture(s,'kitchen')&&distance(s,-2.15,-5.15)>4)||town.tomatoes<1||(!town.fish&&!s.inventory.bread)))reason='自宅のキッチンと、トマト1個・魚またはパン1個が必要です。';
