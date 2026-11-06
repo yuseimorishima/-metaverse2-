@@ -32,14 +32,14 @@ export function createTravelWorld(root,region,hotel=HOTELS.kadensho) {
   sign(tokyo?'東京 TOKYO  →  京都 KYOTO':'京都 KYOTO  →  東京 TOKYO',0,3.6,-3.5,6.5);
   sign(tokyo?'東海道新幹線  19番線  京都・新大阪方面':'東海道新幹線  12番線  名古屋・東京方面',0,2.65,-14,8);
   sign('こだま  指定席  6号車  ｜  ゲーム内ダイヤ',0,2.1,-13.99,7,0,'#172c29','#e5d58d');
-  box(-4.6,.8,6,1.1,1.6,.65,'#e7e6dd',true,true);box(-4.6,1.13,6.34,.78,.55,.03,'#44766a');sign('きっぷ',-4.6,1.82,6.35,1.2);interact('rail-ticket','券売機 · 新幹線のきっぷを買う',-4.6,1.35,6.4,2.6);
+  box(-4.6,.8,6,1.1,1.6,.65,'#e7e6dd',true,true);box(-4.6,1.13,6.34,.78,.55,.03,'#44766a');sign('きっぷ',-4.6,1.82,6.35,1.2);interact('rail-ticket','券売機 · 列車のきっぷを買う',-4.6,1.35,6.4,2.6);
   if(tokyo){sign('観光路線 / 旅先へ',-3.7,2.3,12.5,3);interact('excursion-station','観光路線 · 予約した街へ',-3.7,1.4,12.5,3);}
   bench(-3,-7);bench(-3,0);
   // Streamlined train parked alongside the platform.
   box(7.2,1.55,0,3.4,3,30,'#eeeee8',false,true);for(const x of [5.48,8.92]){box(x,1.1,0,.035,.14,27,'#355d83');for(let z=-12;z<13;z+=2.3)box(x,1.95,z,.04,.68,1.45,'#638d9c',false,true);}
   const nose=orb(7.2,1.1,-17,2,'#f1f0e9',.85,.55,2.3);box(7.2,1.72,-15.3,2.5,.36,1.6,'#3b5865',false,true);
   box(5.46,1.4,3, .04,2.45,1.1,'#c6cfcc');sign('6  指定席',5.42,2.6,3,1.4,-Math.PI/2);
-  interact('board-train','6号車 · 新幹線に乗る',4.85,1.5,3,2.6);
+  interact('board-train',tokyo?'6号車 · 新幹線・観光列車を選ぶ':'6号車 · 新幹線に乗る',4.85,1.5,3,2.6);
   if(tokyo){
    // The red-brick Marunouchi-inspired facade is an original scenic backdrop.
    box(-19,4,1,14,8,36,'#a06850');for(let z=-15;z<17;z+=2.4){box(-11.95,3.2,z,.08,1.9,1,'#516e6b');box(-11.9,5.7,z,.1,1.7,.9,'#e2cfb1');}

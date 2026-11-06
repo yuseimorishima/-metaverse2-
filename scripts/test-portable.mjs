@@ -1,3 +1,5 @@
+import {newLife} from '../src/life.js';
+import {freshTravel,reserveHotel} from '../src/travel.js';
 import {TRIP_DESTINATIONS} from '../src/destinations.js';
 import {chromium,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
@@ -35,5 +37,21 @@ try {
  assert.equal(await page.evaluate(()=>window.komorebi.getState().deluxe.umbrella),true);
  assert.equal(await page.evaluate(()=>window.komorebi.getState().travel.funds),undefined);assert.equal(await page.evaluate(()=>window.komorebi.getState().routines.active.done),1);assert.equal(await page.evaluate(()=>window.komorebi.getState().routines.active.paused),true);
  assert.deepEqual(errors,[]);assert.deepEqual(externalRequests,[]);
- console.log('PASS: self-contained HTML, drag, non-teleporting navigation, housing panel, deluxe weather and umbrella, a timed bite, daily plans, travel site, unfinished meal save/restore, zero external assets. Managed browser file:// navigation is blocked by administrator policy; HTML tested from an in-memory document.');
+ await page.close();
+ const travelPage=await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+ travelPage.on('pageerror',e=>errors.push(e.message));
+ travelPage.on('request',r=>{if(/^https?:/.test(r.url())&&r.url()!==documentUrl)externalRequests.push(r.url());});
+ await travelPage.route('**/*',route=>route.request().url()===documentUrl?route.fulfill({status:200,contentType:'text/html',body:html}):route.abort());
+ const trip={...newLife(),worldLayout:2,money:60000,travel:freshTravel(),position:[4.2,1.65,4.6]};reserveHotel(trip,'hakone_lake',1);trip.travel.region='tokyo';
+ await travelPage.addInitScript(s=>localStorage.setItem('komorebi-life-v1',JSON.stringify(s)),trip);
+ await travelPage.goto(documentUrl);await travelPage.locator('#continue').click();await travelPage.locator('#travel-button').click();
+ await expect(travelPage.locator('#site-destination')).toHaveValue('hakone');
+ await travelPage.locator('[data-action="site-excursion-hakone"]').click();
+ assert.equal(await travelPage.evaluate(()=>window.komorebi.getState().money),42800);
+ assert.equal(await travelPage.locator('#panel').evaluate(el=>el.scrollWidth<=el.clientWidth+1),true);
+ await travelPage.screenshot({path:'dist/mobile-hakone-booking.png'});
+ await travelPage.locator('#close-panel').click();await expect(travelPage.locator('#interaction')).toContainText('6号車');await travelPage.locator('#touch-interact').click();await travelPage.locator('[data-action="dest-ride"]').click();
+ assert.equal(await travelPage.evaluate(()=>window.komorebi.getState().travel.region),'hakone');assert.equal(await travelPage.evaluate(()=>window.komorebi.getState().money),42800);assert.equal(await travelPage.evaluate(()=>window.komorebi.getState().travel.reservation.hotelId),'hakone_lake');
+ assert.deepEqual(errors,[]);assert.deepEqual(externalRequests,[]);
+ console.log('PASS: self-contained HTML, drag, non-teleporting navigation, housing panel, deluxe weather and umbrella, a timed bite, daily plans, travel site, unfinished meal save/restore, mobile Hakone hotel-first rail booking and boarding, zero external assets. Managed browser file:// navigation is blocked by administrator policy; HTML tested from an in-memory document.');
 } finally {await browser.close();}

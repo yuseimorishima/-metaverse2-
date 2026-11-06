@@ -62,11 +62,14 @@ export function bathe(s){const t=ensureTravel(s);if(t.region!=='room'||!t.stay)r
 export function sleepAtHotel(s){const t=ensureTravel(s);if(t.region!=='room'||!t.stay||t.stay.rested)return false;t.stay.rested=true;const destination=hotelFor(s).destination;if(destination){t.memories.push(destination+':stay:'+s.day);t.memories=t.memories.slice(-100);}if(!s.completed.includes('hotel-stay'))s.completed.push('hotel-stay');s.day++;s.minutes=420;s.energy=100;s.hunger=Math.max(10,s.hunger-20);s.thirst=Math.max(10,s.thirst-20);return true;}
 export function checkOut(s){const t=ensureTravel(s);if(t.region!=='hotel'||!t.stay)return false;t.stay=null;return true;}
 
-export function bookExcursion(s,destination,day){const d=TRIP_DESTINATIONS[destination];return !!d&&bookPackage(s,'daytrip',d.hotels[0].id,day);}
+export function excursionDestination(s){const t=ensureTravel(s);return t.excursion?.destination||HOTELS[t.reservation?.hotelId]?.destination||HOTELS[t.plan?.hotelId]?.destination||null;}
+export function canBookExcursion(s,destination,day=s.day){const t=ensureTravel(s);return Object.hasOwn(TRIP_DESTINATIONS,destination)&&['home','residential','cafe','library','garden','hill','waterfront','tokyo'].includes(t.region)&&!t.excursion&&Number.isInteger(day)&&day>=s.day&&day<=s.day+30&&s.money>=TRIP_DESTINATIONS[destination].fare*2;}
+export function bookExcursion(s,destination,day=s.day){if(!canBookExcursion(s,destination,day))return false;const t=ensureTravel(s);s.money-=TRIP_DESTINATIONS[destination].fare*2;t.excursion={destination,day,outbound:true,return:true};return true;}
+export function canRideExcursion(s){const t=ensureTravel(s),p=t.excursion;if(t.region==='tokyo')return !!p?.outbound&&p.day<=s.day&&[[-3.7,12.5,4],[4.85,3,3.2]].some(([x,z,r])=>Math.hypot(s.position[0]-x,s.position[2]-z)<=r);const d=TRIP_DESTINATIONS[t.region];return !!d&&!t.stay&&Math.hypot(s.position[0],s.position[2]-20)<=4&&((p?.destination===t.region&&p.return)||s.money>=d.fare);}
 export function cancelExcursion(s){const t=ensureTravel(s),p=t.excursion;if(!p)return false;s.money+=TRIP_DESTINATIONS[p.destination].fare*((p.outbound?1:0)+(p.return?1:0));t.excursion=null;return true;}
 export function rideExcursion(s){
- const t=ensureTravel(s),p=t.excursion;let destination,minutes;
- if(t.region==='tokyo'){if(!p||!p.outbound||p.day>s.day||Math.hypot(s.position[0]+3.7,s.position[2]-12.5)>4)return false;destination=p.destination;minutes=TRIP_DESTINATIONS[destination].minutes;p.outbound=false;}
+ if(!canRideExcursion(s))return false;const t=ensureTravel(s),p=t.excursion;let destination,minutes;
+ if(t.region==='tokyo'){destination=p.destination;minutes=TRIP_DESTINATIONS[destination].minutes;p.outbound=false;}
  else if(TRIP_DESTINATIONS[t.region]){if(t.stay||Math.hypot(s.position[0],s.position[2]-20)>4)return false;const route=TRIP_DESTINATIONS[t.region];if(p&&p.destination===t.region&&p.return)p.return=false;else{if(s.money<route.fare)return false;s.money-=route.fare;}destination='tokyo';minutes=route.minutes;}
  else return false;
  advance(s,minutes);visit(s,destination);if(p&&!p.outbound&&!p.return)t.excursion=null;return true;
