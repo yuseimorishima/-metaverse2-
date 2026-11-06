@@ -16,6 +16,28 @@ export function buyFurniture(s,type){const item=FURNITURE[type],h=ensureHousing(
 export function footprint(type,x,z,rotation){const item=FURNITURE[type];return {x,z,w:rotation===90?item.d:item.w,d:rotation===90?item.w:item.d};}
 export function placementValid(p,type,x,z,rotation,ignoreId=0){if(!Object.hasOwn(FURNITURE,type)||!Number.isFinite(x)||!Number.isFinite(z)||![0,90].includes(rotation))return false;const a=footprint(type,x,z,rotation);if(Math.abs(x)+a.w/2>5.25||Math.abs(z)+a.d/2>4.25)return false;if(FURNITURE[type].solid&&Math.abs(x)<1.5+a.w/2&&z-a.d/2< -2.3)return false;return p.furniture.every(f=>{if(!Object.hasOwn(FURNITURE,f.type))return false;if(f.id===ignoreId||!FURNITURE[f.type].solid||!FURNITURE[type].solid)return true;const b=footprint(f.type,f.x,f.z,f.rotation);return Math.abs(x-b.x)>=(a.w+b.w)/2+.12||Math.abs(z-b.z)>=(a.d+b.d)/2+.12;});}
 function playerClear(s,id,type,x,z,rotation){if(!FURNITURE[type].solid)return true;const l=LOTS[id],f=footprint(type,l.x+x,l.z+z,rotation);return Math.abs(s.position[0]-f.x)>f.w/2+.3||Math.abs(s.position[2]-f.z)>f.d/2+.3;}
-export function placeFurniture(s,id,type,x,z,rotation=0){const h=ensureHousing(s),p=h.lots[id];if(!p?.style||!nearLot(s,id)||!h.stock[type]||p.furniture.length>=12||!placementValid(p,type,x,z,rotation)||!playerClear(s,id,type,x,z,rotation))return false;h.stock[type]--;p.furniture.push({id:h.nextId++,type,x,z,rotation});return true;}
-export function moveFurniture(s,id,uid,x,z,rotation){const p=ensureHousing(s).lots[id],f=p?.furniture.find(f=>f.id===uid);if(!f||!nearLot(s,id)||!placementValid(p,f.type,x,z,rotation,uid)||!playerClear(s,id,f.type,x,z,rotation))return false;Object.assign(f,{x,z,rotation});return true;}
+export function placementStatus(s,id,type,x,z,rotation=0,ignoreId=0){
+ const h=ensureHousing(s),p=h.lots[id];
+ const fail=reason=>({ok:false,reason});
+ if(!p?.style)return fail('家具を置くには、自分の土地に家を建ててください。');
+ if(!nearLot(s,id))return fail('この家の近くまで歩いてから配置してください。');
+ if(!Object.hasOwn(FURNITURE,type))return fail('収納から家具を選んでください。');
+ if(ignoreId&&!p.furniture.some(f=>f.id===ignoreId&&f.type===type))return fail('移動する家具を選び直してください。');
+ if(!ignoreId&&!h.stock[type])return fail('この家具は収納にありません。配置済みの家具は「動かす」で移動できます。');
+ if(!ignoreId&&p.furniture.length>=12)return fail('この家は12個まで置けます。配置済みの家具を収納に戻すと置けます。');
+ if(!Number.isFinite(x)||!Number.isFinite(z)||![0,90].includes(rotation))return fail('床のマスと向きを選んでください。');
+ const f=footprint(type,x,z,rotation);
+ if(Math.abs(x)+f.w/2>5.25||Math.abs(z)+f.d/2>4.25)return fail('家具が部屋の外にはみ出します。回転するか、内側のマスを選んでください。');
+ if(FURNITURE[type].solid&&Math.abs(x)<1.5+f.w/2&&z-f.d/2< -2.3)return fail('玄関の通路に重なります。奥か壁側のマスを選んでください。');
+ if(!placementValid(p,type,x,z,rotation,ignoreId))return fail('配置済みの家具と重なります。位置か向きを変えてください。');
+ if(!playerClear(s,id,type,x,z,rotation))return fail('あなたが立っている場所と重なります。別のマスを選ぶか、配置画面を閉じて少し移動してください。');
+ return {ok:true,reason:'この場所に置けます。'};
+}
+export function findFurnitureSpot(s,id,type,rotation=0,ignoreId=0,preferred={x:0,z:0}){
+ const cells=[];for(let z=-3;z<=3;z++)for(let x=-4;x<=4;x++)cells.push({x,z,rotation});
+ cells.sort((a,b)=>Math.hypot(a.x-preferred.x,a.z-preferred.z)-Math.hypot(b.x-preferred.x,b.z-preferred.z));
+ return cells.find(c=>placementStatus(s,id,type,c.x,c.z,rotation,ignoreId).ok)||null;
+}
+export function placeFurniture(s,id,type,x,z,rotation=0){if(!placementStatus(s,id,type,x,z,rotation).ok)return false;const h=ensureHousing(s),p=h.lots[id];h.stock[type]--;p.furniture.push({id:h.nextId++,type,x,z,rotation});return true;}
+export function moveFurniture(s,id,uid,x,z,rotation){const p=ensureHousing(s).lots[id],f=p?.furniture.find(f=>f.id===uid);if(!f||!placementStatus(s,id,f.type,x,z,rotation,uid).ok)return false;Object.assign(f,{x,z,rotation});return true;}
 export function storeFurniture(s,id,uid){const h=ensureHousing(s),p=h.lots[id],index=p?.furniture.findIndex(f=>f.id===uid);if(index===undefined||index<0||!nearLot(s,id))return false;const[f]=p.furniture.splice(index,1);h.stock[f.type]++;return true;}

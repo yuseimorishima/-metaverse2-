@@ -1,3 +1,4 @@
+import {freshHousing} from '../src/housing.js';
 import {newLife} from '../src/life.js';
 import {freshTravel,reserveHotel} from '../src/travel.js';
 import {TRIP_DESTINATIONS} from '../src/destinations.js';
@@ -58,5 +59,10 @@ try {
  await roomPage.route('**/*',route=>route.request().url()===documentUrl?route.fulfill({status:200,contentType:'text/html',body:html}):route.abort());
  const room={...newLife(),worldLayout:2,position:[0,1.65,8],travel:{...freshTravel(),region:'room',hotelId:'hakone_suite',stay:{checkInDay:1,rested:false,dinnerDay:0}}};
  await roomPage.addInitScript(s=>localStorage.setItem('komorebi-life-v1',JSON.stringify(s)),room);await roomPage.goto(documentUrl);await roomPage.locator('#continue').click();await expect(roomPage.locator('.vignette')).toHaveCSS('opacity','0');assert.ok(await roomPage.evaluate(()=>{const b=window.komorebi.getWorld().bounds;return b.maxX-b.minX>25;}));await roomPage.screenshot({path:'dist/deluxe-room-preview.png'});assert.deepEqual(errors,[]);
- console.log('PASS: self-contained HTML, drag, non-teleporting navigation, housing panel, deluxe weather and umbrella, a timed bite, daily plans, travel site, unfinished meal save/restore, mobile premium train booking, carriage save/restore and alighting in Hakone, large separated deluxe room, zero external assets. Managed browser file:// navigation is blocked by administrator policy; HTML tested from an in-memory document.');
+ await roomPage.close();
+ const housePage=await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true});housePage.on('pageerror',e=>errors.push(e.message));await housePage.route('**/*',route=>route.request().url()===documentUrl?route.fulfill({status:200,contentType:'text/html',body:html}):route.abort());
+ const housing=freshHousing();housing.lots.central={style:'modern',wall:'white',roof:'forest',floor:'light',furniture:[]};housing.stock.table=1;
+ const owner={...newLife(),worldLayout:2,position:[0,1.65,64],housing,travel:{...freshTravel(),region:'residential'}};
+ await housePage.addInitScript(s=>localStorage.setItem('komorebi-life-v1',JSON.stringify(s)),owner);await housePage.goto(documentUrl);await housePage.locator('#continue').click();await housePage.locator('#house-button').click();await housePage.locator('[data-action="house-edit-central"]').click();await housePage.locator('[data-action="house-select-table"]').click();await housePage.locator('[data-action="house-place"]').click();assert.equal(await housePage.evaluate(()=>window.komorebi.getState().housing.stock.table),0);assert.equal(await housePage.evaluate(()=>window.komorebi.getState().housing.lots.central.furniture[0].type),'table');assert.equal(await housePage.evaluate(()=>window.komorebi.getState().money),5000);assert.deepEqual(errors,[]);
+ console.log('PASS: self-contained HTML, drag, non-teleporting navigation, housing panel, deluxe weather and umbrella, a timed bite, daily plans, travel site, unfinished meal save/restore, mobile premium train booking, carriage save/restore and alighting in Hakone, large separated deluxe room, stored furniture placement from inside an owned house, zero external assets. Managed browser file:// navigation is blocked by administrator policy; HTML tested from an in-memory document.');
 } finally {await browser.close();}
