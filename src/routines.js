@@ -1,3 +1,4 @@
+import {roomLayout} from './hotel-layouts.js';
 import {TRIP_DESTINATIONS} from './destinations.js';
 import {habitAvailability,recordDaily} from './daily.js';
 import {hotelFor,PLACES} from './travel.js';
@@ -31,15 +32,15 @@ export const DISHES={
  cook:{name:'野菜のプレートを作る',kind:'cook',portions:3},
  publicBath:{name:'こもれび湯',kind:'bath',price:350},
  shower:{name:'自宅のシャワー',kind:'bath'},
- hotelBath:{name:'湯宿の露天風呂',kind:'bath'},
+ hotelBath:{name:'客室のお風呂',kind:'bath'},
 };
 export function freshRoutines(){return {version:1,pace:'compact',active:null,meals:0,baths:0,breakfastDay:0,lastMealDay:0,lastMealMinutes:0};}
-export function ensureRoutines(s){if(!s.routines)s.routines=freshRoutines();return s.routines;}
+export function ensureRoutines(s){if(!s.routines)s.routines=freshRoutines();if(s.routines.active?.id==='hotelBath'&&!s.routines.active.hotelId)s.routines.active.hotelId=s.travel?.hotelId||'kadensho';return s.routines;}
 const phases=['ready','chewing','wash-walk','wash-ready','washing','rinse-ready','rinsing','soak-walk','soaking','dry-ready','drying'];
 const point=v=>Array.isArray(v)&&v.length===3&&v.every(n=>Number.isFinite(n)&&Math.abs(n)<300);
 export function validRoutines(r){
  if(!r||r.version!==1||!Object.hasOwn(PACES,r.pace)||!['meals','baths','breakfastDay','lastMealDay'].every(k=>Number.isInteger(r[k])&&r[k]>=0)||!Number.isFinite(r.lastMealMinutes)||r.lastMealMinutes<0||r.lastMealMinutes>=1440)return false;
- const a=r.active;if(a===null)return true;
+ const a=r.active;if(a===null)return true;if(a.hotelId!==undefined&&typeof a.hotelId!=='string')return false;
  return !!a&&Object.hasOwn(DISHES,a.id)&&DISHES[a.id].kind===a.kind&&phases.includes(a.phase)&&!(a.id==='shower'&&['soak-walk','soaking'].includes(a.phase))&&(a.kind==='bath'?a.phase!=='ready'&&a.phase!=='chewing':['ready','chewing'].includes(a.phase))&&a.portionSeconds>0&&a.washSeconds>0&&a.rinseSeconds>0&&a.soakSeconds>0&&a.drySeconds>0&&typeof a.paused==='boolean'&&point(a.anchor)&&typeof a.region==='string'&&Object.hasOwn(PLACES,a.region)&&Number.isFinite(a.yaw)&&(!['chewing','washing','rinsing','soaking','drying'].includes(a.phase)||a.remaining>0)&&['remaining','elapsed','portionSeconds','washSeconds','rinseSeconds','soakSeconds','drySeconds'].every(k=>Number.isFinite(a[k])&&a[k]>=0&&a[k]<=86400)&&Number.isInteger(a.done)&&a.done>=0&&(a.kind==='bath'?a.done<=3:a.done<DISHES[a.id].portions)&&Number.isInteger(a.day)&&a.day>=1;
 }
 const distance=(s,x,z)=>Math.hypot(s.position[0]-x,s.position[2]-z);
@@ -76,7 +77,7 @@ export function routineAvailability(s,id){
  }
  if(id==='shower'&&(!isLocalRegion(t?.region)||!nearbyHomeFixture(s,'shower')))reason='自分で置いたシャワーの近くで使えます。';
  if(id==='hotelBath'){
-  if(t?.region!=='room'||!t.stay)reason='宿泊の手続きをして、客室の露天風呂へどうぞ。';
+  if(t?.region!=='room'||!t.stay)reason='宿泊の手続きをして、客室のお風呂へどうぞ。';
   else if(!during(s,300,1440))reason=`入浴できる時間は ${serviceHours(id)} です。`;
  }
  if(money<routinePrice(s,id))reason='所持金が足りません。';
@@ -94,16 +95,17 @@ export function beginRoutine(s,id){
  if(id==='breakfast')r.breakfastDay=s.day;
  const d=ensureDeluxe(s);d.riding=false;const fixture=id==='shower'?homeFixturePoint(s,'shower'):null;
  r.active={id,kind:dish.kind,phase:dish.kind==='bath'?'wash-walk':'ready',paused:false,done:0,remaining:0,elapsed:0,portionSeconds:(dish.kind==='habit'?p.snack:p[dish.kind]||p.meal)/(dish.portions||1),washSeconds:p.wash/3,rinseSeconds:p.rinse,soakSeconds:p.soak,drySeconds:p.dry,anchor:fixture?[fixture[0],1.65,fixture[1]]:[...s.position],region:s.travel?.region||'home',yaw:s.yaw||0,day:s.day};
+ if(id==='hotelBath')r.active.hotelId=s.travel?.hotelId||'kadensho';
  return true;
 }
-export function routineTarget(a){if(a.phase==='wash-walk')return a.id==='publicBath'?[-95,31]:a.id==='hotelBath'?[5.2,-1.5]:[a.anchor[0],a.anchor[2]];if(a.phase==='soak-walk')return a.id==='publicBath'?[-90,34]:[7,-3];return null;}
+export function routineTarget(a){if(a.phase==='wash-walk')return a.id==='publicBath'?[-95,31]:a.id==='hotelBath'?(roomLayout(a.hotelId)?.wash||[5.2,-1.5]):[a.anchor[0],a.anchor[2]];if(a.phase==='soak-walk')return a.id==='publicBath'?[-90,34]:(roomLayout(a.hotelId)?.bath||[7,-3]);return null;}
 export function canResumeRoutine(s){
  const a=ensureRoutines(s).active;if(!a)return false;
  if(['bread','apple','homemade','bento','water'].includes(a.id))return true;
  const same=a.region===s.travel?.region||isLocalRegion(a.region)&&isLocalRegion(s.travel?.region);if(!same)return false;
  if(a.kind==='bath'&&!['wash-walk','soak-walk'].includes(a.phase)){
   const washed=['soaking','dry-ready','drying'].includes(a.phase);
-  const target=a.id==='publicBath'?(washed?[-90,34]:[-95,31]):a.id==='hotelBath'?(washed?[7,-3]:[5.2,-1.5]):[a.anchor[0],a.anchor[2]];
+  const target=a.id==='publicBath'?(washed?[-90,34]:[-95,31]):a.id==='hotelBath'?(washed?(roomLayout(a.hotelId)?.bath||[7,-3]):(roomLayout(a.hotelId)?.wash||[5.2,-1.5])):[a.anchor[0],a.anchor[2]];
   return distance(s,...target)<(a.id==='shower'?.65:2.2);
  }
  return distance(s,a.anchor[0],a.anchor[2])<(a.kind==='cook'?3.5:12);

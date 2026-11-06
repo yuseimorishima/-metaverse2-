@@ -1,3 +1,6 @@
+import {createHotelLobby} from './hotel-lobby-world.js';
+import {createHotelRoom} from './hotel-room-world.js';
+import {roomLayout} from './hotel-layouts.js';
 import {createRailWorld} from './rail-world.js';
 import {createDestinationWorld} from './destination-world.js';
 import {TRIP_DESTINATIONS} from './destinations.js';
@@ -6,6 +9,8 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {HOTELS} from './travel.js';
 export function createTravelWorld(root,region,hotel=HOTELS.kadensho,journey=null) {
+ if(region==='hotel'&&roomLayout(hotel.id))return createHotelLobby(root,hotel);
+ if(region==='room'&&roomLayout(hotel.id))return createHotelRoom(root,hotel);
  if(region==='train'&&journey?.service)return createRailWorld(root,journey);
  if(TRIP_DESTINATIONS[region])return createDestinationWorld(root,region);
  const colliders=[],interactables=[],lamps=[],dynamic=[];

@@ -7,7 +7,7 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "node tests/life.test.js && node tests/travel.test.js && node tests/town.test.js && node tests/housing.test.js && node tests/deluxe.test.js && node tests/routines.test.js && node tests/daily.test.js && node tests/destinations.test.js && node tests/transport.test.js && node tests/rail.test.js",
+    "test": "node tests/life.test.js && node tests/travel.test.js && node tests/town.test.js && node tests/housing.test.js && node tests/deluxe.test.js && node tests/routines.test.js && node tests/daily.test.js && node tests/destinations.test.js && node tests/transport.test.js && node tests/rail.test.js && node tests/hotel-layouts.test.js",
     "test:e2e": "playwright test",
     "build:portable": "node scripts/build-portable.mjs"
   },
